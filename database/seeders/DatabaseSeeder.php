@@ -13,15 +13,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Mencipta satu pengguna spesifik
-        User::create([
-            'name' => 'Admin Utama',
-            'email' => 'admin@example.com',
-            'email_verified_at' => now(),
-            'password' => Hash::make('password123'), // Pastikan kata laluan di-hash
-        ]);
+        // Membuat atau mengupdate Admin
+        User::updateOrCreate(
+            ['email' => 'superadmin@example.com'], // Kunci pencarian
+            [
+                'name' => 'Admin Utama',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password123'),
+                'role' => 'superadmin', // Menambahkan role admin
+            ]
+        );
 
-        // Atau menggunakan Factory untuk mencipta 10 pengguna rawak
-        // User::factory(10)->create();
+        // Memanggil UserSeeder agar ikut dijalankan
+        $this->call([
+            UserSeeder::class,
+        ]);
     }
 }
