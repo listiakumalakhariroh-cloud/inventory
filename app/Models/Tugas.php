@@ -9,15 +9,18 @@ class Tugas extends Model
 {
     use HasFactory;
 
-    // Menentukan nama tabel jika diperlukan (opsional jika nama tabel sudah 'tugas')
     protected $table = 'tugas';
 
-    // Konfigurasi Primary Key Custom
+    // Sesuaikan primary key ke kodetugas
     protected $primaryKey = 'kodetugas';
+
+    // Matikan incrementing karena primary key adalah string, bukan integer auto-increment
     public $incrementing = false;
+
+    // Set tipe data primary key menjadi string
     protected $keyType = 'string';
 
-    // Kolom yang boleh diisi (Mass Assignment)
+    // Kolom apa saja yang boleh diisi
     protected $fillable = [
         'kodetugas',
         'nama_tugas',
@@ -28,9 +31,7 @@ class Tugas extends Model
         'id_admin',
     ];
 
-    /**
-     * Relasi ke model User (Admin)
-     */
+    // Relasi ke User (Admin)
     public function admin()
     {
         return $this->belongsTo(User::class, 'id_admin', 'id');

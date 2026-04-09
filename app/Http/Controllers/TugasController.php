@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 // Tambahkan dua baris ini untuk fungsi Excel
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Facades\Storage;
 
 class TugasController extends Controller
 {
@@ -68,7 +69,7 @@ class TugasController extends Controller
     public function export()
     {
         $tugas = Tugas::with('admin')->orderBy('created_at', 'desc')->get();
-        
+
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -83,7 +84,7 @@ class TugasController extends Controller
         // Format Header (Bold & Background Abu-abu)
         $sheet->getStyle('A1:G1')->getFont()->setBold(true);
         $sheet->getStyle('A1:G1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-              ->getStartColor()->setARGB('FFF0F0F0');
+            ->getStartColor()->setARGB('FFF0F0F0');
 
         // Isi Data
         $row = 2; // Mulai dari baris ke-2
@@ -91,10 +92,14 @@ class TugasController extends Controller
             $today = \Carbon\Carbon::today();
             $start = \Carbon\Carbon::parse($t->tanggal_mulai);
             $end = \Carbon\Carbon::parse($t->tanggal_selesai);
-            
-            if($today->lt($start)) { $status = 'Mendatang'; }
-            elseif($today->gt($end)) { $status = 'Selesai'; }
-            else { $status = 'Aktif'; }
+
+            if ($today->lt($start)) {
+                $status = 'Mendatang';
+            } elseif ($today->gt($end)) {
+                $status = 'Selesai';
+            } else {
+                $status = 'Aktif';
+            }
 
             $sheet->setCellValue('A' . $row, $t->kodetugas);
             $sheet->setCellValue('B' . $row, $t->nama_tugas);
@@ -128,6 +133,103 @@ class TugasController extends Controller
         $writer->save('php://output');
         exit;
     }
-    
+
+    // Menampilkan halaman form tambah tugas
+    public function create()
+    {
+        return view('admin.tambahtugas');
+    }
+
+    // Menyimpan data tugas ke database
+    public function store(Request $request)
+    {
+        // 1. Validasi Input
+        $request->validate([
+            'kodetugas' => 'required|string|max:10|unique:tugas,kodetugas',
+            'nama_tugas' => 'required|string|max:255',
+            'deskripsi' => 'required|string',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'lampiran' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048', // max 2MB
+        ]);
+
+        // 2. Siapkan data yang akan disimpan
+        $data = $request->except('lampiran'); // Ambil semua input kecuali file lampiran
+
+        // Isi id_admin otomatis dari id user yang sedang login
+        $data['id_admin'] = Auth::id();
+
+        // 3. Proses Upload Lampiran (jika ada)
+        if ($request->hasFile('lampiran')) {
+            // Simpan file ke folder storage/app/public/lampiran_tugas
+            $path = $request->file('lampiran')->store('lampiran_tugas', 'public');
+            $data['lampiran'] = $path;
+        }
+
+        // 4. Simpan ke database
+        Tugas::create($data);
+
+        // 5. Redirect kembali ke halaman daftar tugas dengan pesan sukses
+        return redirect()->route('admin.tugas.index')->with('success', 'Tugas baru berhasil ditambahkan!');
+    }
+
+    public function destroy($kodetugas)
+    {
+        // Cari data tugas berdasarkan primary key (kodetugas)
+        $tugas = Tugas::findOrFail($kodetugas);
+
+        // Cek apakah tugas memiliki file lampiran dan file tersebut ada di storage
+        if ($tugas->lampiran && Storage::disk('public')->exists($tugas->lampiran)) {
+            // Hapus file fisik dari storage
+            Storage::disk('public')->delete($tugas->lampiran);
+        }
+
+        // Hapus data tugas dari database
+        $tugas->delete();
+
+        // Redirect dengan pesan sukses (akan ditangkap oleh toast notifikasi yang sudah kita buat)
+        return redirect()->route('admin.tugas.index')->with('success', 'Tugas beserta lampirannya berhasil dihapus!');
+    }
+
+    public function edit($kodetugas)
+    {
+        $tugas = Tugas::findOrFail($kodetugas);
+        return view('admin.edittugas', compact('tugas'));
+    }
+
+    public function update(Request $request, $kodetugas)
+    {
+        $tugas = Tugas::findOrFail($kodetugas);
+
+        $request->validate([
+            'nama_tugas' => 'required|string|max:255',
+            'deskripsi' => 'required|string',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
+            'lampiran' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
+
+        $data = $request->except(['lampiran', 'kodetugas']);
+
+        if ($request->hasFile('lampiran')) {
+            if ($tugas->lampiran && Storage::disk('public')->exists($tugas->lampiran)) {
+                Storage::disk('public')->delete($tugas->lampiran);
+            }
+            
+            $path = $request->file('lampiran')->store('lampiran_tugas', 'public');
+            $data['lampiran'] = $path;
+        }
+
+        $tugas->update($data);
+
+        return redirect()->route('admin.tugas.index')->with('success', 'Data tugas berhasil diperbarui!');
+    }
+
+    public function show($kodetugas)
+    {
+        $tugas = Tugas::findOrFail($kodetugas);
+        return view('admin.detailtugas', compact('tugas'));
+    }
+
     // ... biarkan fungsi create, store, edit, update, destroy tetap ada di bawahnya ...
 }
