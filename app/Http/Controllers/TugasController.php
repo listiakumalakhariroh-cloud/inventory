@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Tugas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 // Tambahkan dua baris ini untuk fungsi Excel
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -13,9 +14,47 @@ use Illuminate\Support\Facades\Storage;
 
 class TugasController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $tugas = Tugas::with('admin')->orderBy('created_at', 'desc')->get();
+        // Mulai Query Builder dan ambil relasi admin
+        $query = Tugas::with('admin');
+
+        // 1. Pencarian (Search) berdasarkan Kode Tugas atau Nama Tugas
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('kodetugas', 'like', "%{$search}%")
+                    ->orWhere('nama_tugas', 'like', "%{$search}%");
+            });
+        }
+
+        // 2. Filter Bulan (Berdasarkan tanggal_mulai)
+        if ($request->filled('bulan')) {
+            $query->whereMonth('tanggal_mulai', $request->bulan);
+        }
+
+        // 3. Filter Tahun (Berdasarkan tanggal_mulai)
+        if ($request->filled('tahun')) {
+            $query->whereYear('tanggal_mulai', $request->tahun);
+        }
+
+        // 4. Filter Status 
+        // Menggunakan tanggal_selesai karena tabel tidak punya kolom status secara eksplisit
+        if ($request->filled('status')) {
+            $now = \Carbon\Carbon::now(); // Ambil waktu hari ini
+
+            if ($request->status == 'aktif') {
+                // Aktif: Tanggal selesai lebih besar atau sama dengan hari ini (Belum lewat deadline)
+                $query->where('tanggal_selesai', '>=', $now);
+            } elseif ($request->status == 'selesai') {
+                // Selesai: Tanggal selesai lebih kecil dari hari ini (Sudah lewat deadline)
+                $query->where('tanggal_selesai', '<', $now);
+            }
+        }
+
+        // Ambil data yang sudah difilter, urutkan dari yang terbaru dibuat
+        $tugas = $query->orderBy('created_at', 'desc')->get();
+
         return view('admin.tugas', compact('tugas'));
     }
 
@@ -215,7 +254,7 @@ class TugasController extends Controller
             if ($tugas->lampiran && Storage::disk('public')->exists($tugas->lampiran)) {
                 Storage::disk('public')->delete($tugas->lampiran);
             }
-            
+
             $path = $request->file('lampiran')->store('lampiran_tugas', 'public');
             $data['lampiran'] = $path;
         }
@@ -229,6 +268,51 @@ class TugasController extends Controller
     {
         $tugas = Tugas::findOrFail($kodetugas);
         return view('admin.detailtugas', compact('tugas'));
+    }
+
+    public function importProcess(Request $request)
+    {
+        // Data input berupa array: tugas[0][nama_tugas], tugas[1][nama_tugas], dst
+        $tugasData = $request->input('tugas');
+
+        // Data file berupa array (jika ada yang diupload)
+        $tugasFiles = $request->file('tugas');
+
+        if (!$tugasData) {
+            return redirect()->route('admin.tugas.index')->with('error', 'Tidak ada data yang diproses.');
+        }
+
+        foreach ($tugasData as $index => $row) {
+            // Validasi sederhana, abaikan baris yang kosong nama tugasnya
+            if (empty($row['nama_tugas'])) continue;
+
+            // Jika user tidak mengisi kodetugas di form, buat otomatis
+            $kode = !empty($row['kodetugas']) ? $row['kodetugas'] : 'TGS' . strtoupper(Str::random(5));
+
+            // Pastikan kode benar-benar unik agar tidak error primary key
+            while (Tugas::where('kodetugas', $kode)->exists()) {
+                $kode = 'TGS' . strtoupper(Str::random(5));
+            }
+
+            $lampiranPath = null;
+            // Cek apakah pada indeks baris ini ada file lampiran yang diupload
+            if (isset($tugasFiles[$index]['lampiran'])) {
+                $lampiranPath = $tugasFiles[$index]['lampiran']->store('lampiran_tugas', 'public');
+            }
+
+            // Simpan ke database
+            Tugas::create([
+                'kodetugas'       => $kode,
+                'nama_tugas'      => $row['nama_tugas'],
+                'deskripsi'       => $row['deskripsi'],
+                'tanggal_mulai'   => $row['tanggal_mulai'],
+                'tanggal_selesai' => $row['tanggal_selesai'],
+                'lampiran'        => $lampiranPath,
+                'id_admin'        => Auth::id(),
+            ]);
+        }
+
+        return redirect()->route('admin.tugas.index')->with('success', 'Data Tugas beserta lampiran berhasil diimport!');
     }
 
     // ... biarkan fungsi create, store, edit, update, destroy tetap ada di bawahnya ...

@@ -53,4 +53,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/tugas/{kodetugas}/edit', [TugasController::class, 'edit'])->name('admin.tugas.edit');
     Route::put('/admin/tugas/{kodetugas}', [TugasController::class, 'update'])->name('admin.tugas.update');
     Route::get('/admin/tugas/{kodetugas}', [TugasController::class, 'show'])->name('admin.tugas.show');
+    Route::post('/admin/tugas/import-process', [\App\Http\Controllers\TugasController::class, 'importProcess'])->name('admin.tugas.importProcess');
 });
+
