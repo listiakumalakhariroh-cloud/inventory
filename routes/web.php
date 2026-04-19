@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\PengaduanController;
-use App\Http\Controllers\TugasController; // Tambahan: Import TugasController
+use App\Http\Controllers\TugasController;
+use App\Http\Controllers\PenugasanController; // Diperbaiki: 'App' menggunakan huruf kapital
 
 Route::get('/', function () {
     return view('welcome');
@@ -53,6 +54,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/tugas/{kodetugas}/edit', [TugasController::class, 'edit'])->name('admin.tugas.edit');
     Route::put('/admin/tugas/{kodetugas}', [TugasController::class, 'update'])->name('admin.tugas.update');
     Route::get('/admin/tugas/{kodetugas}', [TugasController::class, 'show'])->name('admin.tugas.show');
-    Route::post('/admin/tugas/import-process', [\App\Http\Controllers\TugasController::class, 'importProcess'])->name('admin.tugas.importProcess');
-});
+    Route::post('/admin/tugas/import-process', [TugasController::class, 'importProcess'])->name('admin.tugas.importProcess'); // Diperbaiki: Disederhanakan
 
+    // Manajemen Penugasan
+    Route::prefix('admin/penugasan')->name('admin.penugasan.')->group(function () {
+        Route::get('/', [PenugasanController::class, 'index'])->name('index');
+        Route::get('/template', [PenugasanController::class, 'template'])->name('template');
+        Route::get('/export', [PenugasanController::class, 'export'])->name('export');
+        Route::get('/tambah', [PenugasanController::class, 'create'])->name('create');
+        Route::post('/store', [PenugasanController::class, 'store'])->name('store');
+        Route::get('/{id}', [PenugasanController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [PenugasanController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [PenugasanController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PenugasanController::class, 'destroy'])->name('destroy');
+        Route::post('/import-process', [PenugasanController::class, 'importProcess'])->name('importProcess');
+    });
+});
