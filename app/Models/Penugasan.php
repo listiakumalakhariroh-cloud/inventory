@@ -9,39 +9,22 @@ class Penugasan extends Model
 {
     use HasFactory;
 
-    // Menentukan nama tabel secara eksplisit (opsional tapi disarankan)
     protected $table = 'penugasan';
+    protected $fillable = ['kodetugas', 'id_admin', 'batas_waktu_lapor'];
 
-    // Kolom yang dapat diisi secara massal (Mass Assignment)
-    protected $fillable = [
-        'kodetugas',
-        'id_admin',
-        'id_penerima', // Pengganti id_yang_ditugaskan
-        'batas_waktu_lapor', // Pengganti tanggalmaksimaldilaporkan
-    ];
-
-    /**
-     * Relasi ke model Tugas.
-     * Karena primary key di tabel tugas adalah 'kodetugas', kita harus mendefinisikannya secara spesifik.
-     */
     public function tugas()
     {
         return $this->belongsTo(Tugas::class, 'kodetugas', 'kodetugas');
     }
 
-    /**
-     * Relasi ke model User sebagai Admin (Pemberi Tugas)
-     */
     public function admin()
     {
-        return $this->belongsTo(User::class, 'id_admin', 'id');
+        return $this->belongsTo(User::class, 'id_admin');
     }
 
-    /**
-     * Relasi ke model User sebagai Penerima Tugas (Yang ditugaskan)
-     */
-    public function penerima()
+    // Relasi ke tabel anggota (pivot)
+    public function anggota()
     {
-        return $this->belongsTo(User::class, 'id_penerima', 'id');
+        return $this->hasMany(AnggotaPenugasan::class, 'id_penugasan');
     }
 }
