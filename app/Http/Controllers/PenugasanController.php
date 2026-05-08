@@ -288,4 +288,30 @@ class PenugasanController extends Controller
 
         return redirect()->route('admin.penugasan.index')->with('success', 'Data penugasan multi-anggota berhasil diimport!');
     }
+
+    public function checkExisting($kodetugas)
+    {
+        // Cari penugasan berdasarkan kodetugas beserta relasi anggota dan usernya
+        $penugasan = Penugasan::with(['anggota.user', 'anggota.jabatan'])
+            ->where('kodetugas', $kodetugas)
+            ->first();
+
+        if ($penugasan) {
+            return response()->json([
+                'exists' => true,
+                'data' => $penugasan
+            ]);
+        }
+
+        return response()->json(['exists' => false]);
+    }
+
+    public function show($id)
+    {
+        // Ambil data penugasan berdasarkan ID beserta semua relasinya
+        $p = Penugasan::with(['tugas', 'admin', 'anggota.user', 'anggota.jabatan'])->findOrFail($id);
+        
+        // Arahkan ke file blade detailpenugasan
+        return view('admin.detailpenugasan', compact('p'));
+    }
 }

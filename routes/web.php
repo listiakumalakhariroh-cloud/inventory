@@ -68,5 +68,6 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{id}', [PenugasanController::class, 'update'])->name('update');
         Route::delete('/{id}', [PenugasanController::class, 'destroy'])->name('destroy');
         Route::post('/import-process', [PenugasanController::class, 'importProcess'])->name('importProcess');
+        Route::get('/check-existing/{kodetugas}', [PenugasanController::class, 'checkExisting'])->name('checkExisting');
     });
 });
