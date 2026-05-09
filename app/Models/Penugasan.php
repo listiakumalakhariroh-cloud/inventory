@@ -27,4 +27,9 @@ class Penugasan extends Model
     {
         return $this->hasMany(AnggotaPenugasan::class, 'id_penugasan');
     }
+
+    public function laporan()
+    {
+        return $this->hasOne(Laporan::class, 'id_penugasan');
+    }
 }

@@ -14,7 +14,7 @@ class LoginController extends Controller
     public function showLoginForm()
     {
         // Ganti 'welcome' dengan nama view yang berisi form login Anda (misal: 'auth.login' jika ada)
-        return view('welcome'); 
+        return view('auth.login'); 
     }
 
     /**

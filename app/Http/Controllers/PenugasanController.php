@@ -80,14 +80,14 @@ class PenugasanController extends Controller
         $tugas = Tugas::all();
         $users = User::where('role', '!=', 'admin')->get();
         $jabatans = Jabatan::all();
-        
+
         return view('admin.editpenugasan', compact('p', 'tugas', 'users', 'jabatans'));
     }
 
     public function update(Request $request, $id)
     {
         $p = Penugasan::findOrFail($id);
-        
+
         $request->validate([
             'kodetugas' => 'required|exists:tugas,kodetugas',
             'batas_waktu_lapor' => 'required|date',
@@ -142,13 +142,13 @@ class PenugasanController extends Controller
         // Data Dummy
         $sheet->setCellValue('A2', 'TGS001');
         $sheet->setCellValue('B2', date('Y-m-d', strtotime('+7 days')));
-        $sheet->setCellValue('C2', '2'); 
-        $sheet->setCellValue('D2', '1'); 
-        
+        $sheet->setCellValue('C2', '2');
+        $sheet->setCellValue('D2', '1');
+
         $sheet->setCellValue('A3', 'TGS001'); // Masukkan kode tugas & waktu yang sama untuk anggota yang berbeda
         $sheet->setCellValue('B3', date('Y-m-d', strtotime('+7 days')));
-        $sheet->setCellValue('C3', '3'); 
-        $sheet->setCellValue('D3', '2'); 
+        $sheet->setCellValue('C3', '3');
+        $sheet->setCellValue('D3', '2');
 
         foreach (range('A', 'D') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
@@ -254,7 +254,7 @@ class PenugasanController extends Controller
     public function importProcess(Request $request)
     {
         // Sesuaikan parameter form request ini jika di frontend menggunakan input name yang berbeda
-        $data = $request->input('penugasan'); 
+        $data = $request->input('penugasan');
         if (!$data) return back()->with('error', 'Tidak ada data.');
 
         DB::transaction(function () use ($data) {
@@ -308,10 +308,36 @@ class PenugasanController extends Controller
 
     public function show($id)
     {
-        // Ambil data penugasan berdasarkan ID beserta semua relasinya
+        // Mengambil data penugasan beserta relasinya
         $p = Penugasan::with(['tugas', 'admin', 'anggota.user', 'anggota.jabatan'])->findOrFail($id);
-        
-        // Arahkan ke file blade detailpenugasan
+
+        // Keamanan tambahan: Jika bukan admin, pastikan user tersebut memang anggota di tugas ini
+        if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'superadmin') {
+            $isMember = $p->anggota->contains('id_user', Auth::id());
+            if (!$isMember) {
+                abort(403, 'Anda tidak memiliki akses ke detail penugasan ini.');
+            }
+        }
+
+        // Selalu tampilkan view versi User (Pointify) untuk fitur chat/laporan
+        return view('detailpenugasanuser', compact('p'));
+    }
+
+    public function showAdmin($id)
+    {
+        // Method ini hanya untuk tampilan manajemen internal admin
+        $p = Penugasan::with(['tugas', 'admin', 'anggota.user', 'anggota.jabatan'])->findOrFail($id);
+
         return view('admin.detailpenugasan', compact('p'));
+    }
+
+    public function indexUser()
+    {
+        // Mengambil penugasan yang di dalamnya terdapat user yang sedang login sebagai anggota
+        $penugasans = Penugasan::whereHas('anggota', function ($query) {
+            $query->where('id_user', Auth::id());
+        })->with(['tugas', 'anggota.user'])->orderBy('created_at', 'desc')->get();
+
+        return view('penugasanuser', compact('penugasans'));
     }
 }

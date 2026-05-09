@@ -57,7 +57,7 @@
                 <span class="font-medium">Manajemen Tugas</span>
             </a>
 
-            <a href="{{ route('admin.pengaduan') }}"
+            <a href="{{ route('admin.pengaduan.index') }}"
                 class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('admin.pengaduan') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-yellow-400' }}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -77,8 +77,8 @@
                 <span class="font-medium">Manajemen Penugasan</span>
             </a>
 
-            <a href="#"
-                class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 text-gray-300 hover:bg-gray-900 hover:text-yellow-400">
+            <a href="{{ route('laporan.index') }}"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('laporan.*') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-900 hover:text-yellow-400' }}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
