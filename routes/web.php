@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\TugasController;
 use App\Http\Controllers\PenugasanController;
@@ -17,6 +18,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
     
+    // Dashboard User
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
@@ -39,31 +41,42 @@ Route::middleware(['auth'])->group(function () {
             return view('admin.dashboardadmin');
         })->name('admin.dashboard');
 
-        // Manajemen Tugas
-        Route::get('/tugas', [TugasController::class, 'index'])->name('admin.tugas.index');
-        Route::get('/tugas/tambah', [TugasController::class, 'create'])->name('admin.tugas.create');
-        Route::post('/tugas/simpan', [TugasController::class, 'store'])->name('admin.tugas.store');
-        Route::get('/tugas/{id}/edit', [TugasController::class, 'edit'])->name('admin.tugas.edit');
-        Route::put('/tugas/{id}/update', [TugasController::class, 'update'])->name('admin.tugas.update');
-        Route::delete('/tugas/{id}/hapus', [TugasController::class, 'destroy'])->name('admin.tugas.destroy');
-        Route::get('/tugas/import', [TugasController::class, 'showImport'])->name('admin.tugas.import');
-        Route::post('/tugas/import/proses', [TugasController::class, 'processImport'])->name('admin.tugas.import.proses');
-        
+        // Manajemen Tugas (Versi Lengkap)
+        Route::prefix('tugas')->name('admin.tugas.')->group(function () {
+            Route::get('/', [TugasController::class, 'index'])->name('index');
+            Route::get('/template', [TugasController::class, 'template'])->name('template');
+            Route::get('/export', [TugasController::class, 'export'])->name('export');
+            Route::get('/tambah', [TugasController::class, 'create'])->name('create');
+            Route::post('/store', [TugasController::class, 'store'])->name('store');
+            Route::post('/import-process', [TugasController::class, 'importProcess'])->name('importProcess');
+            Route::delete('/{kodetugas}', [TugasController::class, 'destroy'])->name('destroy');
+            Route::get('/{kodetugas}/edit', [TugasController::class, 'edit'])->name('edit');
+            Route::put('/{kodetugas}', [TugasController::class, 'update'])->name('update');
+            Route::get('/{kodetugas}', [TugasController::class, 'show'])->name('show');
+        });
 
-        // Manajemen Penugasan
-        Route::get('/penugasan-kerja', [PenugasanController::class, 'index'])->name('admin.penugasan.index');
-        Route::get('/penugasan-kerja/tambah', [PenugasanController::class, 'create'])->name('admin.penugasan.create');
-        Route::post('/penugasan-kerja/simpan', [PenugasanController::class, 'store'])->name('admin.penugasan.store');
-        Route::get('/penugasan-kerja/{id}/detail', [PenugasanController::class, 'showAdmin'])->name('admin.penugasan.show');
-        Route::delete('/penugasan-kerja/{id}/hapus', [PenugasanController::class, 'destroy'])->name('admin.penugasan.destroy');
+        // Manajemen Penugasan (Versi Lengkap)
+        Route::prefix('penugasan')->name('admin.penugasan.')->group(function () {
+            Route::get('/', [PenugasanController::class, 'index'])->name('index');
+            Route::get('/template', [PenugasanController::class, 'template'])->name('template');
+            Route::get('/export', [PenugasanController::class, 'export'])->name('export');
+            Route::get('/tambah', [PenugasanController::class, 'create'])->name('create');
+            Route::post('/store', [PenugasanController::class, 'store'])->name('store');
+            Route::post('/import-process', [PenugasanController::class, 'importProcess'])->name('importProcess');
+            Route::get('/check-existing/{kodetugas}', [PenugasanController::class, 'checkExisting'])->name('checkExisting');
+            Route::get('/{id}', [PenugasanController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [PenugasanController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [PenugasanController::class, 'update'])->name('update');
+            Route::delete('/{id}', [PenugasanController::class, 'destroy'])->name('destroy');
+        });
 
-        // Manajemen Laporan
+        // Manajemen Laporan & Diskusi Revisi
         Route::get('/manajemen-laporan', [LaporanController::class, 'index'])->name('admin.laporan.index');
         Route::get('/manajemen-laporan/{id}', [LaporanController::class, 'showAdmin'])->name('admin.laporan.show');
         Route::patch('/manajemen-laporan/{id}/status', [LaporanController::class, 'updateStatus'])->name('admin.laporan.status');
         Route::post('/manajemen-laporan/{id}/revisi', [LaporanController::class, 'setRevision'])->name('laporan.set_revision');
         Route::post('/manajemen-laporan/{id}/setujui', [LaporanController::class, 'approve'])->name('laporan.approve');
-        
+
         // Manajemen Pengaduan
         Route::get('/pengaduan', [PengaduanController::class, 'index'])->name('admin.pengaduan.index');
         Route::get('/pengaduan/tambah', [PengaduanController::class, 'create'])->name('admin.pengaduan.create');
