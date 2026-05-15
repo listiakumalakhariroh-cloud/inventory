@@ -10,10 +10,10 @@ class AnggotaPenugasanController extends Controller
     // Menambahkan anggota ke suatu penugasan
     public function store(Request $request)
     {
+        // Validasi id_jabatan telah dihapus
         $request->validate([
             'id_penugasan' => 'required|exists:penugasan,id',
             'id_user'      => 'required|exists:users,id',
-            'id_jabatan'   => 'required|exists:jabatans,id',
         ]);
 
         // Cek agar user tidak ditambahkan 2x di penugasan yang sama
@@ -25,10 +25,10 @@ class AnggotaPenugasanController extends Controller
             return back()->with('error', 'User tersebut sudah ada di dalam penugasan ini!');
         }
 
+        // Penyimpanan id_jabatan telah dihapus
         AnggotaPenugasan::create([
             'id_penugasan' => $request->id_penugasan,
             'id_user'      => $request->id_user,
-            'id_jabatan'   => $request->id_jabatan,
         ]);
 
         return back()->with('success', 'Anggota berhasil ditambahkan ke penugasan.');

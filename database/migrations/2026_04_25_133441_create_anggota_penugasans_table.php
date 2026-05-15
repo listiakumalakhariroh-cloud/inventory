@@ -17,8 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('id_user');
             $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
 
-            $table->unsignedBigInteger('id_jabatan');
-            $table->foreign('id_jabatan')->references('id')->on('jabatans')->onDelete('restrict');
+            // id_jabatan beserta foreign key-nya telah dihapus
 
             $table->timestamps();
         });

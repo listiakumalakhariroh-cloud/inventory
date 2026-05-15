@@ -6,7 +6,6 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\TugasController;
 use App\Http\Controllers\PenugasanController;
 use App\Http\Controllers\LaporanController;
-use App\Http\Controllers\PengaduanController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -17,7 +16,7 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
-    
+
     // Dashboard User
     Route::get('/dashboard', function () {
         return view('dashboard');
@@ -36,7 +35,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Grup Admin (Khusus Admin & Superadmin)
     Route::middleware(['role:admin,superadmin'])->prefix('admin')->group(function () {
-        
+
         Route::get('/dashboard', function () {
             return view('admin.dashboardadmin');
         })->name('admin.dashboard');
@@ -76,10 +75,5 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/manajemen-laporan/{id}/status', [LaporanController::class, 'updateStatus'])->name('admin.laporan.status');
         Route::post('/manajemen-laporan/{id}/revisi', [LaporanController::class, 'setRevision'])->name('laporan.set_revision');
         Route::post('/manajemen-laporan/{id}/setujui', [LaporanController::class, 'approve'])->name('laporan.approve');
-
-        // Manajemen Pengaduan
-        Route::get('/pengaduan', [PengaduanController::class, 'index'])->name('admin.pengaduan.index');
-        Route::get('/pengaduan/tambah', [PengaduanController::class, 'create'])->name('admin.pengaduan.create');
-        Route::post('/pengaduan/simpan', [PengaduanController::class, 'store'])->name('admin.pengaduan.store');
     });
 });

@@ -12,55 +12,40 @@
                 <li class="text-gray-900 font-medium">Detail Penugasan</li>
             </ol>
         </nav>
-        <h1 class="text-3xl font-extrabold text-gray-900">{{ $p->tugas->nama_tugas ?? 'Detail Penugasan' }}</h1>
+        <h1 class="text-3xl font-extrabold text-gray-900">{{ $p->tugas->nama_tugas }}</h1>
+        <p class="text-gray-500 mt-1">Kode Tugas: <span class="font-mono font-bold text-blue-600">{{ $p->tugas->kodetugas }}</span></p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 space-y-6">
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Deskripsi Tugas</h3>
-                <div class="prose prose-blue text-gray-700 max-w-none">
-                    {!! nl2br(e($p->tugas->deskripsi)) !!}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Deskripsi Tugas</h3>
+                <div class="prose max-w-none text-gray-700">
+                    {!! nl2br(e($p->tugas->deskripsi ?? 'Tidak ada deskripsi tambahan.')) !!}
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Lampiran Pendukung</h3>
-                @if($p->tugas->lampiran)
-                    <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <svg class="w-8 h-8 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path>
-                        </svg>
-                        <div class="flex-1">
-                            <p class="text-sm font-semibold text-gray-900">File Dokumen Tugas</p>
-                            <p class="text-xs text-gray-500">Klik tombol di samping untuk melihat file.</p>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Timeline & Status</h3>
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-red-100 rounded-lg text-red-600 mr-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
-                        <a href="{{ asset('storage/' . $p->tugas->lampiran) }}" target="_blank" class="px-4 py-2 bg-white border border-gray-300 rounded-md text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm">
-                            Buka File
-                        </a>
+                        <div>
+                            <p class="text-xs text-gray-500 font-medium uppercase">Batas Waktu</p>
+                            <p class="text-gray-900 font-bold">{{ \Carbon\Carbon::parse($p->batas_waktu_lapor)->translatedFormat('d F Y') }}</p>
+                        </div>
                     </div>
-                @else
-                    <p class="text-sm text-gray-500 italic">Tidak ada lampiran file untuk tugas ini.</p>
-                @endif
+                    <div class="text-right">
+                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full uppercase">Sedang Berjalan</span>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="space-y-6">
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Waktu Pengerjaan</h3>
-                <div class="space-y-4">
-                    <div>
-                        <p class="text-xs text-gray-500">Tanggal Mulai</p>
-                        <p class="text-sm font-semibold text-gray-900">{{ \Carbon\Carbon::parse($p->tugas->tanggal_mulai)->format('d F Y, H:i') }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500">Batas Laporan (Deadline)</p>
-                        <p class="text-sm font-semibold text-red-600">{{ \Carbon\Carbon::parse($p->batas_waktu_lapor)->format('d F Y') }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Rekan Tim</h3>
                 <div class="space-y-3">
                     @foreach($p->anggota as $anggota)
@@ -69,7 +54,7 @@
                              src="https://ui-avatars.com/api/?name={{ urlencode($anggota->user->name) }}&background=random&color=fff" alt="">
                         <div class="ml-3">
                             <p class="text-sm font-medium text-gray-900">{{ $anggota->user->name }}</p>
-                            <p class="text-xs text-gray-500">{{ $anggota->jabatan->nama_jabatan ?? 'Anggota' }}</p>
+                            {{-- Baris informasi jabatan telah dihapus --}}
                         </div>
                     </div>
                     @endforeach
@@ -79,8 +64,8 @@
             <div class="bg-blue-600 rounded-xl shadow-lg p-6 text-white">
                 <h3 class="text-lg font-bold mb-2">Sudah Selesai?</h3>
                 <p class="text-sm text-blue-100 mb-4">Segera kirimkan laporan pengerjaan Anda sebelum melewati batas waktu.</p>
-                <a href="{{ route('laporan.create', ['id_penugasan' => $p->id]) }}" class="w-full inline-flex justify-center items-center px-4 py-3 bg-white text-blue-600 font-bold rounded-lg hover:bg-blue-50 transition shadow-md">
-                    Kirim Laporan Sekarang
+                <a href="{{ route('laporan.create', ['id_penugasan' => $p->id]) }}" class="w-full inline-flex justify-center items-center px-4 py-3 bg-white text-blue-600 rounded-xl font-bold hover:bg-blue-50 transition shadow-sm">
+                    Buat Laporan Sekarang
                 </a>
             </div>
         </div>
