@@ -9,8 +9,12 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
+    // 1. TAMBAHKAN 3 BARIS INI UNTUK KONFIGURASI PRIMARY KEY
+    protected $primaryKey = 'nip';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     /**
      * The attributes that are mass assignable.
@@ -18,6 +22,7 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'nip', // 2. PASTIKAN 'nip' DITAMBAHKAN KE SINI
         'name',
         'email',
         'password',

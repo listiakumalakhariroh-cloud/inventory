@@ -11,12 +11,15 @@ return new class extends Migration
         Schema::create('laporan_revisi_chats', function (Blueprint $table) {
             $table->id();
             
+            // Relasi ke tabel laporans (tetap menggunakan ID integer sesuai laporans_table)
             $table->unsignedBigInteger('id_laporan');
             $table->foreign('id_laporan')->references('id')->on('laporans')->onDelete('cascade');
 
-            // ID User yang mengirim pesan (Bisa Admin, bisa Anggota)
-            $table->unsignedBigInteger('id_user');
-            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
+            // 1. Perubahan: Tipe data id_user diubah menjadi string agar sesuai dengan NIP
+            $table->string('id_user');
+            
+            // 2. Perubahan: Referensi diubah dari 'id' ke 'nip' pada tabel users
+            $table->foreign('id_user')->references('nip')->on('users')->onDelete('cascade');
 
             $table->text('pesan');
 

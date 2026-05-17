@@ -11,13 +11,16 @@ return new class extends Migration
         Schema::create('anggota_penugasans', function (Blueprint $table) {
             $table->id();
             
+            // Relasi ke tabel penugasan (tetap menggunakan ID auto-increment dari tabel penugasan)
             $table->unsignedBigInteger('id_penugasan');
             $table->foreign('id_penugasan')->references('id')->on('penugasan')->onDelete('cascade');
 
-            $table->unsignedBigInteger('id_user');
-            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
+            // 1. Mengubah tipe data id_user menjadi string untuk menampung NIP
+            $table->string('id_user');
+            // 2. Mereferensikan ke kolom nip di tabel users
+            $table->foreign('id_user')->references('nip')->on('users')->onDelete('cascade');
 
-            // id_jabatan beserta foreign key-nya telah dihapus
+            // id_jabatan beserta foreign key-nya telah dihapus sesuai struktur asli Anda
 
             $table->timestamps();
         });

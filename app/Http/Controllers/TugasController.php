@@ -6,6 +6,7 @@ use App\Models\Tugas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Models\User;
 
 // Tambahkan dua baris ini untuk fungsi Excel
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -196,7 +197,7 @@ class TugasController extends Controller
         $data = $request->except('lampiran'); // Ambil semua input kecuali file lampiran
 
         // Isi id_admin otomatis dari id user yang sedang login
-        $data['id_admin'] = Auth::id();
+        $data['id_admin'] = Auth::nip();
 
         // 3. Proses Upload Lampiran (jika ada)
         if ($request->hasFile('lampiran')) {
@@ -276,7 +277,7 @@ class TugasController extends Controller
         $tugasData = $request->input('tugas');
 
         // Data file berupa array (jika ada yang diupload)
-        $tugasFiles = $request->file('tugas');
+        // $tugasFiles = $request->file('tugas');
 
         if (!$tugasData) {
             return redirect()->route('admin.tugas.index')->with('error', 'Tidak ada data yang diproses.');
@@ -295,9 +296,10 @@ class TugasController extends Controller
             }
 
             $lampiranPath = null;
-            // Cek apakah pada indeks baris ini ada file lampiran yang diupload
-            if (isset($tugasFiles[$index]['lampiran'])) {
-                $lampiranPath = $tugasFiles[$index]['lampiran']->store('lampiran_tugas', 'public');
+            
+            // PERBAIKAN: Pastikan $tugasFiles tidak null dan merupakan array sebelum mengakses indeksnya
+            if ($request->hasFile("tugas.{$index}.lampiran")) {
+                $lampiranPath = $request->file("tugas.{$index}.lampiran")->store('lampiran_tugas', 'public');
             }
 
             // Simpan ke database
@@ -305,15 +307,65 @@ class TugasController extends Controller
                 'kodetugas'       => $kode,
                 'nama_tugas'      => $row['nama_tugas'],
                 'deskripsi'       => $row['deskripsi'],
-                'tanggal_mulai'   => $row['tanggal_mulai'],
-                'tanggal_selesai' => $row['tanggal_selesai'],
+
+                // PERUBAHAN: Bungkus nilai tanggal dengan $this->formatTanggalMySQL()
+                'tanggal_mulai'   => $this->formatTanggalMySQL($row['tanggal_mulai']),
+                'tanggal_selesai' => $this->formatTanggalMySQL($row['tanggal_selesai']),
+                
                 'lampiran'        => $lampiranPath,
-                'id_admin'        => Auth::id(),
+                'id_admin'        => \Illuminate\Support\Facades\Auth::user()->nip,
             ]);
         }
 
         return redirect()->route('admin.tugas.index')->with('success', 'Data Tugas beserta lampiran berhasil diimport!');
     }
 
+    /**
+     * Fungsi untuk menstandarkan berbagai format tanggal Excel menjadi YYYY-MM-DD (MySQL)
+     */
+    private function formatTanggalMySQL($tanggal)
+    {
+        if (empty($tanggal)) return null;
+
+        // 1. Jika tanggal terbaca sebagai Angka Seri Excel (misal: 46158)
+        if (is_numeric($tanggal)) {
+            try {
+                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($tanggal)->format('Y-m-d');
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        // 2. Jika tanggal berupa String / Teks (misal: 16/05/2026, 16-05-2026, dll)
+        $tanggal = trim($tanggal);
+
+        // Daftar format yang paling sering digunakan
+        $formats = [
+            'd/m/Y', // 16/05/2026
+            'd-m-Y', // 16-05-2026
+            'd.m.Y', // 16.05.2026
+            'Y-m-d', // 2026-05-16 (Sudah sesuai MySQL)
+            'Y/m/d', // 2026/05/16
+            'm/d/Y', // 05/16/2026 (Format US)
+        ];
+
+        foreach ($formats as $format) {
+            try {
+                // Coba cocokkan string dengan format satu per satu
+                return \Carbon\Carbon::createFromFormat($format, $tanggal)->format('Y-m-d');
+            } catch (\Exception $e) {
+                // Jika gagal, lanjut coba format berikutnya di array
+                continue; 
+            }
+        }
+
+        // 3. Fallback: Jika tidak ada format yang cocok, biarkan Carbon mencoba menebaknya
+        try {
+            return \Carbon\Carbon::parse($tanggal)->format('Y-m-d');
+        } catch (\Exception $e) {
+            // Jika format benar-benar hancur dan tidak bisa dibaca, kembalikan null
+            return null;
+        }
+    }
     // ... biarkan fungsi create, store, edit, update, destroy tetap ada di bawahnya ...
 }

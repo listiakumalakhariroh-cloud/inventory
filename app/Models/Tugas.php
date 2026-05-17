@@ -34,6 +34,7 @@ class Tugas extends Model
     // Relasi ke User (Admin)
     public function admin()
     {
-        return $this->belongsTo(User::class, 'id_admin', 'id');
+        // PERUBAHAN: Ubah parameter ketiga dari 'id' menjadi 'nip'
+        return $this->belongsTo(User::class, 'id_admin', 'nip');
     }
 }

@@ -5,31 +5,52 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Faker\Factory as Faker;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Membuat atau mengupdate User biasa
+        $faker = Faker::create('id_ID');
+
+        // 1. Update/Buat 1 Superadmin
         User::updateOrCreate(
-            ['email' => 'user@test.com'], // Kunci pencarian
+            ['nip' => '199001012024011001'],
             [
-                'name' => 'Pengguna Percubaan',
+                'name' => 'Super Administrator',
+                'email' => 'superadmin@test.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
-                'role' => 'user', // Role user
+                'role' => 'superadmin',
             ]
         );
 
-        // 2. Menambahkan akun admin1 baru
-        User::updateOrCreate(
-            ['email' => 'admin1@test.com'], // Silakan ubah email jika diperlukan
-            [
-                'name' => 'Admin 1',
-                'email_verified_at' => now(),
-                'password' => Hash::make('password123'), // Silakan ubah password jika diperlukan
-                'role' => 'admin', // Role admin
-            ]
-        );
+        // 2. Buat 4 Admin
+        for ($i = 1; $i <= 4; $i++) {
+            User::updateOrCreate(
+                ['nip' => $faker->unique()->numerify('##################')], // 18 digit NIP acak
+                [
+                    'name' => $faker->name,
+                    'email' => "admin{$i}@test.com",
+                    'email_verified_at' => now(),
+                    'password' => Hash::make('password123'),
+                    'role' => 'admin',
+                ]
+            );
+        }
+
+        // 3. Buat 7 User Biasa (Sisa dari total 10 user baru + 2 user lama yang disesuaikan)
+        for ($i = 1; $i <= 7; $i++) {
+            User::updateOrCreate(
+                ['nip' => $faker->unique()->numerify('##################')],
+                [
+                    'name' => $faker->name,
+                    'email' => $faker->unique()->safeEmail,
+                    'email_verified_at' => now(),
+                    'password' => Hash::make('password'),
+                    'role' => 'user',
+                ]
+            );
+        }
     }
 }

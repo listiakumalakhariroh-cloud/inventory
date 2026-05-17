@@ -13,8 +13,7 @@ class AnggotaPenugasan extends Model
 
     protected $fillable = [
         'id_penugasan',
-        'id_user',
-        // id_jabatan telah dihapus dari sini
+        'id_user', // Kolom ini sekarang menyimpan NIP (string)
     ];
 
     /**
@@ -30,8 +29,7 @@ class AnggotaPenugasan extends Model
      */
     public function user()
     {
-        return $this->belongsTo(User::class, 'id_user');
+        // PERUBAHAN: Tambahkan parameter ketiga 'nip' untuk menggantikan referensi 'id' default
+        return $this->belongsTo(User::class, 'id_user', 'nip');
     }
-
-    // Method relasi jabatan() telah dihapus
 }

@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
         // Daftarkan semua seeder di sini sesuai urutan yang benar
         $this->call([
             UserSeeder::class,
-            JabatanSeeder::class,     // Tambahkan ini
+            // JabatanSeeder::class,     // Tambahkan ini
             TugasSeeder::class,       // Tambahkan ini (jika ada)
             PenugasanSeeder::class // Tambahkan ini (jika ada)
         ]);

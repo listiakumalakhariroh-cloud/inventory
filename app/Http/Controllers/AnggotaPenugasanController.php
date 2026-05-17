@@ -13,7 +13,7 @@ class AnggotaPenugasanController extends Controller
         // Validasi id_jabatan telah dihapus
         $request->validate([
             'id_penugasan' => 'required|exists:penugasan,id',
-            'id_user'      => 'required|exists:users,id',
+            'id_user'      => 'required|exists:users,nip',
         ]);
 
         // Cek agar user tidak ditambahkan 2x di penugasan yang sama

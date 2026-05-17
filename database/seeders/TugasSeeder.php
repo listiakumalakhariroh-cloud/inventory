@@ -11,7 +11,9 @@ class TugasSeeder extends Seeder
 {
     public function run(): void
     {
-        // Pastikan sudah ada user/admin dengan ID 1 di tabel users
+        // Gunakan NIP Superadmin yang dibuat di UserSeeder
+        $adminNip = '199001012024011001';
+
         DB::table('tugas')->insert([
             [
                 'kodetugas' => 'KGD' . strtoupper(Str::random(5)),
@@ -20,7 +22,7 @@ class TugasSeeder extends Seeder
                 'lampiran' => 'panduan_audit.pdf',
                 'tanggal_mulai' => Carbon::now(),
                 'tanggal_selesai' => Carbon::now()->addDays(7),
-                'id_admin' => 1,
+                'id_admin' => $adminNip, // PERUBAHAN: Menggunakan NIP
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -31,7 +33,7 @@ class TugasSeeder extends Seeder
                 'lampiran' => null,
                 'tanggal_mulai' => Carbon::now()->addDay(),
                 'tanggal_selesai' => Carbon::now()->addDays(3),
-                'id_admin' => 1,
+                'id_admin' => $adminNip, // PERUBAHAN: Menggunakan NIP
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

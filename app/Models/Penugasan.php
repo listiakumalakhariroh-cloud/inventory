@@ -9,7 +9,9 @@ class Penugasan extends Model
 {
     use HasFactory;
 
+    // Pastikan baris ini tersimpan dengan benar
     protected $table = 'penugasan';
+    
     protected $fillable = ['kodetugas', 'id_admin', 'batas_waktu_lapor'];
 
     public function tugas()
@@ -19,10 +21,10 @@ class Penugasan extends Model
 
     public function admin()
     {
-        return $this->belongsTo(User::class, 'id_admin');
+        // PERBAIKAN: Tambahkan parameter 'nip' di sini
+        return $this->belongsTo(User::class, 'id_admin', 'nip');
     }
 
-    // Relasi ke tabel anggota (pivot)
     public function anggota()
     {
         return $this->hasMany(AnggotaPenugasan::class, 'id_penugasan');

@@ -7,7 +7,7 @@
 </div>
 
 <div class="grid grid-cols-1 gap-6">
-    @forelse($penugasans as $p)
+    @forelse($penugasan as $p)
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
         <div class="p-6">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">

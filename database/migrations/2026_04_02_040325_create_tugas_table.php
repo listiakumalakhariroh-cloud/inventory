@@ -9,18 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tugas', function (Blueprint $table) {
-            // Menggunakan kodetugas sebagai primary key (string)
-            $table->string('kodetugas', 10)->primary();
+            $table->string('kodetugas', 10)->primary(); 
             $table->string('nama_tugas');
-            $table->text('deskripsi');
-            $table->string('lampiran')->nullable();
-            $table->dateTime('tanggal_mulai');
-            $table->dateTime('tanggal_selesai');
+            $table->text('deskripsi')->nullable();
             
-            // Relasi ke tabel users (admin yang membuat)
-            $table->unsignedBigInteger('id_admin');
-            $table->foreign('id_admin')->references('id')->on('users')->onDelete('cascade');
+            // TAMBAHAN: Kolom yang sebelumnya terlewat
+            $table->date('tanggal_mulai')->nullable();
+            $table->date('tanggal_selesai')->nullable();
+            $table->string('lampiran')->nullable(); // nullable karena file tidak selalu wajib ada
             
+            $table->string('id_admin'); 
+            $table->foreign('id_admin')->references('nip')->on('users')->onDelete('cascade');
+
             $table->timestamps();
         });
     }

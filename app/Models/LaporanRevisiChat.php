@@ -13,7 +13,7 @@ class LaporanRevisiChat extends Model
 
     protected $fillable = [
         'id_laporan', 
-        'id_user', 
+        'id_user', // Kolom ini sekarang menyimpan NIP (string)
         'pesan'
     ];
 
@@ -25,6 +25,7 @@ class LaporanRevisiChat extends Model
     // Relasi ke tabel user untuk mengetahui siapa pengirim pesannya
     public function user()
     {
-        return $this->belongsTo(User::class, 'id_user');
+        // PERUBAHAN: Tambahkan parameter ketiga 'nip' di sini
+        return $this->belongsTo(User::class, 'id_user', 'nip');
     }
 }
