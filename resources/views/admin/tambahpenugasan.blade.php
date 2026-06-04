@@ -92,182 +92,190 @@
     </div>
 
     <script>
-        const users = @json($users);
-        let selectedUsers = [];
+    const users = @json($users);
+    let selectedUsers = [];
 
-        document.addEventListener("DOMContentLoaded", () => {
-            renderUserList(users);
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const kodetugasParam = urlParams.get('kodetugas');
-            if (kodetugasParam) {
-                const selectTugas = document.getElementById('kodetugas');
-                selectTugas.value = kodetugasParam;
-                if (selectTugas.value) {
-                    goToStep(2);
-                }
-            }
-        });
-
-        function handleKembali() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('kodetugas')) {
-                window.location.href = "{{ route('admin.penugasan.index') }}";
-            } else {
-                goToStep(1);
+    document.addEventListener("DOMContentLoaded", () => {
+        renderUserList(users);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const kodetugasParam = urlParams.get('kodetugas');
+        if (kodetugasParam) {
+            const selectTugas = document.getElementById('kodetugas');
+            selectTugas.value = kodetugasParam;
+            if (selectTugas.value) {
+                goToStep(2);
             }
         }
+    });
 
-        async function goToStep(step) {
-            const kodetugas = document.getElementById('kodetugas').value;
-            if (step === 2) {
-                if (!kodetugas) { alert("Pilih tugas terlebih dahulu!"); return; }
+    function handleKembali() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('kodetugas')) {
+            window.location.href = "{{ route('admin.penugasan.index') }}";
+        } else {
+            goToStep(1);
+        }
+    }
 
-                const btnNext = document.querySelector('button[onclick="goToStep(2)"]');
-                const originalText = btnNext.innerHTML;
-                btnNext.innerHTML = 'Memuat...';
-                btnNext.disabled = true;
+    async function goToStep(step) {
+        const kodetugas = document.getElementById('kodetugas').value;
+        if (step === 2) {
+            if (!kodetugas) { alert("Pilih tugas terlebih dahulu!"); return; }
 
-                try {
-                    const response = await fetch(`/admin/penugasan/check-existing/${kodetugas}`);
-                    const result = await response.json();
+            const btnNext = document.querySelector('button[onclick="goToStep(2)"]');
+            const originalText = btnNext.innerHTML;
+            btnNext.innerHTML = 'Memuat...';
+            btnNext.disabled = true;
 
-                    const form = document.getElementById('penugasanForm');
-                    const methodInput = document.getElementById('formMethod');
-                    const batasWaktuInput = document.getElementById('batas_waktu_lapor');
-                    
-                    const pageTitle = document.getElementById('pageTitle');
-                    const pageSubtitle = document.getElementById('pageSubtitle');
+            try {
+                const response = await fetch(`/admin/penugasan/check-existing/${kodetugas}`);
+                const result = await response.json();
 
-                    if (result.exists) {
-                        form.action = `/admin/penugasan/${result.data.id}`;
-                        methodInput.value = 'PUT';
-                        batasWaktuInput.value = result.data.batas_waktu_lapor;
-                        selectedUsers = result.data.anggota.map(a => ({
-                            id: a.id_user,
-                            name: a.user ? a.user.name : 'Unknown'
-                        }));
-                        
-                        pageTitle.innerText = 'Edit Penugasan';
-                        pageSubtitle.innerText = 'Perbarui data batas waktu lapor dan anggota untuk tugas ini.';
-                    } else {
-                        form.action = `{{ route('admin.penugasan.store') }}`;
-                        methodInput.value = 'POST';
-                        batasWaktuInput.value = '';
-                        selectedUsers = [];
-                        
-                        pageTitle.innerText = 'Tambah Penugasan Baru';
-                        pageSubtitle.innerText = 'Ikuti langkah-langkah di bawah ini untuk mendelegasikan tugas.';
-                    }
-                    renderSelectedMembers();
-                    filterUsers();
-                } catch (error) {
-                    console.error(error);
-                    alert("Terjadi kesalahan saat memuat data penugasan.");
-                }
+                const form = document.getElementById('penugasanForm');
+                const methodInput = document.getElementById('formMethod');
+                const batasWaktuInput = document.getElementById('batas_waktu_lapor');
                 
-                btnNext.innerHTML = originalText;
-                btnNext.disabled = false;
+                const pageTitle = document.getElementById('pageTitle');
+                const pageSubtitle = document.getElementById('pageSubtitle');
 
-                document.getElementById('step-1').classList.add('hidden');
-                document.getElementById('step-2').classList.remove('hidden');
-                document.getElementById('indicator-step-1').classList.replace('text-blue-600', 'text-gray-400');
-                document.getElementById('indicator-step-1').querySelector('div').classList.replace('bg-blue-100', 'bg-gray-100');
-                document.getElementById('indicator-step-2').classList.replace('text-gray-400', 'text-blue-600');
-                document.getElementById('indicator-step-2').querySelector('div').classList.replace('bg-gray-100', 'bg-blue-100');
-            } else {
-                document.getElementById('step-1').classList.remove('hidden');
-                document.getElementById('step-2').classList.add('hidden');
-                document.getElementById('indicator-step-1').classList.replace('text-gray-400', 'text-blue-600');
-                document.getElementById('indicator-step-1').querySelector('div').classList.replace('bg-gray-100', 'bg-blue-100');
-                document.getElementById('indicator-step-2').classList.replace('text-blue-600', 'text-gray-400');
-                document.getElementById('indicator-step-2').querySelector('div').classList.replace('bg-blue-100', 'bg-gray-100');
-            }
-        }
-
-        function filterUsers() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = users.filter(u => u.name.toLowerCase().includes(query));
-            renderUserList(filtered);
-        }
-
-        function renderUserList(arr) {
-            const list = document.getElementById('userList');
-            list.innerHTML = '';
-            
-            if (arr.length === 0) {
-                list.innerHTML = '<li class="p-3 text-sm text-gray-500 text-center">Data user tidak ditemukan.</li>';
-                return;
+                if (result.exists) {
+                    form.action = `/admin/penugasan/${result.data.id}`;
+                    methodInput.value = 'PUT';
+                    batasWaktuInput.value = result.data.batas_waktu_lapor;
+                    // UBAH: Gunakan nip, mapping id_user (yang sekarang berisi NIP) ke nip
+                    selectedUsers = result.data.anggota.map(a => ({
+                        nip: a.id_user, 
+                        name: a.user ? a.user.name : 'Unknown'
+                    }));
+                    
+                    pageTitle.innerText = 'Edit Penugasan';
+                    pageSubtitle.innerText = 'Perbarui data batas waktu lapor dan anggota untuk tugas ini.';
+                } else {
+                    form.action = `{{ route('admin.penugasan.store') }}`;
+                    methodInput.value = 'POST';
+                    batasWaktuInput.value = '';
+                    selectedUsers = [];
+                    
+                    pageTitle.innerText = 'Tambah Penugasan Baru';
+                    pageSubtitle.innerText = 'Ikuti langkah-langkah di bawah ini untuk mendelegasikan tugas.';
+                }
+                renderSelectedMembers();
+                filterUsers();
+            } catch (error) {
+                console.error(error);
+                alert("Terjadi kesalahan saat memuat data penugasan.");
             }
             
-            arr.forEach(u => {
-                const isSelected = selectedUsers.some(su => su.id === u.id);
-                const li = document.createElement('li');
-                li.className = "flex items-center justify-between p-3 hover:bg-gray-100";
-                li.innerHTML = `
-                    <div><p class="text-sm font-medium">${u.name}</p></div>
-                    <button type="button" onclick="addMember(${u.id}, '${u.name.replace(/'/g, "\\'")}')" 
-                        class="p-1.5 rounded-full ${isSelected ? 'bg-gray-200 text-gray-400' : 'bg-blue-100 text-blue-600'}" ${isSelected ? 'disabled' : ''}>
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    </button>`;
-                list.appendChild(li);
-            });
-        }
+            btnNext.innerHTML = originalText;
+            btnNext.disabled = false;
 
-        function addMember(id, name) {
-            if (selectedUsers.some(user => user.id === id)) return;
-            selectedUsers.push({ id, name });
-            renderSelectedMembers();
-            filterUsers();
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('indicator-step-1').classList.replace('text-blue-600', 'text-gray-400');
+            document.getElementById('indicator-step-1').querySelector('div').classList.replace('bg-blue-100', 'bg-gray-100');
+            document.getElementById('indicator-step-2').classList.replace('text-gray-400', 'text-blue-600');
+            document.getElementById('indicator-step-2').querySelector('div').classList.replace('bg-gray-100', 'bg-blue-100');
+        } else {
+            document.getElementById('step-1').classList.remove('hidden');
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('indicator-step-1').classList.replace('text-gray-400', 'text-blue-600');
+            document.getElementById('indicator-step-1').querySelector('div').classList.replace('bg-gray-100', 'bg-blue-100');
+            document.getElementById('indicator-step-2').classList.replace('text-blue-600', 'text-gray-400');
+            document.getElementById('indicator-step-2').querySelector('div').classList.replace('bg-blue-100', 'bg-gray-100');
         }
+    }
 
-        function removeMember(id) {
-            selectedUsers = selectedUsers.filter(u => u.id !== id);
-            renderSelectedMembers();
-            filterUsers();
+    function filterUsers() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = users.filter(u => u.name.toLowerCase().includes(query));
+        renderUserList(filtered);
+    }
+
+    function renderUserList(arr) {
+        const list = document.getElementById('userList');
+        list.innerHTML = '';
+        
+        if (arr.length === 0) {
+            list.innerHTML = '<li class="p-3 text-sm text-gray-500 text-center">Data user tidak ditemukan.</li>';
+            return;
         }
-
-        function renderSelectedMembers() {
-            const container = document.getElementById('selectedMembersContainer');
-            const empty = document.getElementById('emptyState');
+        
+        arr.forEach(u => {
+            // UBAH: Cek menggunakan nip
+            const isSelected = selectedUsers.some(su => su.nip === u.nip);
+            const li = document.createElement('li');
+            li.className = "flex items-center justify-between p-3 hover:bg-gray-100";
             
-            Array.from(container.children).forEach(c => { if(c.id !== 'emptyState') c.remove(); });
-            
-            if (selectedUsers.length === 0) { 
-                empty.style.display = 'block'; 
-                return; 
-            }
-            
-            empty.style.display = 'none';
+            // UBAH: Kirim nip ke addMember dan tambahkan tanda kutip ('') agar nip tidak ter-convert menjadi format int limit js
+            li.innerHTML = `
+                <div><p class="text-sm font-medium">${u.name}</p><p class="text-xs text-gray-500">${u.nip}</p></div>
+                <button type="button" onclick="addMember('${u.nip}', '${u.name.replace(/'/g, "\\'")}')" 
+                    class="p-1.5 rounded-full ${isSelected ? 'bg-gray-200 text-gray-400' : 'bg-blue-100 text-blue-600'}" ${isSelected ? 'disabled' : ''}>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </button>`;
+            list.appendChild(li);
+        });
+    }
 
-            selectedUsers.forEach((u, i) => {
-                const div = document.createElement('div');
-                div.className = "flex items-center justify-between p-3 border rounded-lg bg-white mb-2 shadow-sm";
-                div.innerHTML = `
-                    <div class="flex-1 mr-4">
-                        <p class="text-sm font-medium mb-1">${u.name}</p>
-                        <input type="hidden" name="anggota[${i}][id_user]" value="${u.id}">
-                    </div>
-                    <button type="button" onclick="removeMember(${u.id})" class="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-lg transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>`;
-                container.appendChild(div);
-            });
-        }
+    // UBAH: Parameter menggunakan nip
+    function addMember(nip, name) {
+        if (selectedUsers.some(user => user.nip === nip)) return;
+        selectedUsers.push({ nip, name });
+        renderSelectedMembers();
+        filterUsers();
+    }
 
-        function submitForm() {
-            const batasWaktu = document.getElementById('batas_waktu_lapor').value;
-            if (!batasWaktu) {
-                alert('Mohon tentukan Batas Waktu Lapor terlebih dahulu!');
-                document.getElementById('batas_waktu_lapor').focus();
-                return;
-            }
-            if (selectedUsers.length === 0) {
-                alert('Anda belum menambahkan anggota satupun!');
-                return;
-            }
-            const form = document.getElementById('penugasanForm');
-            if (form.reportValidity()) form.submit();
+    // UBAH: Parameter menggunakan nip
+    function removeMember(nip) {
+        selectedUsers = selectedUsers.filter(u => u.nip !== nip);
+        renderSelectedMembers();
+        filterUsers();
+    }
+
+    function renderSelectedMembers() {
+        const container = document.getElementById('selectedMembersContainer');
+        const empty = document.getElementById('emptyState');
+        
+        Array.from(container.children).forEach(c => { if(c.id !== 'emptyState') c.remove(); });
+        
+        if (selectedUsers.length === 0) { 
+            empty.style.display = 'block'; 
+            return; 
         }
-    </script>
+        
+        empty.style.display = 'none';
+
+        selectedUsers.forEach((u, i) => {
+            const div = document.createElement('div');
+            div.className = "flex items-center justify-between p-3 border rounded-lg bg-white mb-2 shadow-sm";
+            
+            // UBAH: input value menjadi u.nip, parameter hapus menjadi u.nip (pakai kutip string)
+            div.innerHTML = `
+                <div class="flex-1 mr-4">
+                    <p class="text-sm font-medium mb-1">${u.name}</p>
+                    <input type="hidden" name="anggota[${i}][id_user]" value="${u.nip}">
+                </div>
+                <button type="button" onclick="removeMember('${u.nip}')" class="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-lg transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>`;
+            container.appendChild(div);
+        });
+    }
+
+    function submitForm() {
+        const batasWaktu = document.getElementById('batas_waktu_lapor').value;
+        if (!batasWaktu) {
+            alert('Mohon tentukan Batas Waktu Lapor terlebih dahulu!');
+            document.getElementById('batas_waktu_lapor').focus();
+            return;
+        }
+        if (selectedUsers.length === 0) {
+            alert('Anda belum menambahkan anggota satupun!');
+            return;
+        }
+        const form = document.getElementById('penugasanForm');
+        if (form.reportValidity()) form.submit();
+    }
+</script>
 @endsection

@@ -6,6 +6,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\TugasController;
 use App\Http\Controllers\PenugasanController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -36,10 +38,24 @@ Route::middleware(['auth'])->group(function () {
     // Grup Admin (Khusus Admin & Superadmin)
     Route::middleware(['role:admin,superadmin'])->prefix('admin')->group(function () {
 
-        Route::get('/dashboard', function () {
-            return view('admin.dashboardadmin');
-        })->name('admin.dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
+        Route::prefix('pengguna')->name('admin.user.')->group(function () {
+            // 1. Halaman Utama / Tampil Data
+            Route::get('/', [UserController::class, 'index'])->name('index');
+
+            // 2. Create (Tambah Pengguna)
+            Route::get('/tambah', [UserController::class, 'create'])->name('create'); // Menampilkan form tambah
+            Route::post('/store', [UserController::class, 'store'])->name('store');   // Memproses penyimpanan data baru
+
+            // 3. Edit (Ubah Pengguna)
+            Route::get('/{nip}/edit', [UserController::class, 'edit'])->name('edit'); // Menampilkan form edit berdasarkan NIP
+            Route::put('/{nip}', [UserController::class, 'update'])->name('update'); // Memproses pembaruan data (Method PUT)
+
+            // 4. Destroy (Hapus Pengguna)
+            Route::delete('/{nip}', [UserController::class, 'destroy'])->name('destroy'); // Memproses penghapusan data (Method DELETE)
+        });
+        
         // Manajemen Tugas (Versi Lengkap)
         Route::prefix('tugas')->name('admin.tugas.')->group(function () {
             Route::get('/', [TugasController::class, 'index'])->name('index');
@@ -63,7 +79,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/store', [PenugasanController::class, 'store'])->name('store');
             Route::post('/import-process', [PenugasanController::class, 'importProcess'])->name('importProcess');
             Route::get('/check-existing/{kodetugas}', [PenugasanController::class, 'checkExisting'])->name('checkExisting');
-            Route::get('/{id}', [PenugasanController::class, 'show'])->name('show');
+            Route::get('/{id}', [PenugasanController::class, 'showAdmin'])->name('show');
             Route::get('/{id}/edit', [PenugasanController::class, 'edit'])->name('edit');
             Route::put('/{id}', [PenugasanController::class, 'update'])->name('update');
             Route::delete('/{id}', [PenugasanController::class, 'destroy'])->name('destroy');

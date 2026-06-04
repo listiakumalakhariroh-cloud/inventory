@@ -197,7 +197,7 @@ class TugasController extends Controller
         $data = $request->except('lampiran'); // Ambil semua input kecuali file lampiran
 
         // Isi id_admin otomatis dari id user yang sedang login
-        $data['id_admin'] = Auth::nip();
+        $data['id_admin'] = Auth::user()->nip;
 
         // 3. Proses Upload Lampiran (jika ada)
         if ($request->hasFile('lampiran')) {

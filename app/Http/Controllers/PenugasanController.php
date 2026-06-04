@@ -104,7 +104,7 @@ class PenugasanController extends Controller
             }
         }
 
-        return view('detailpenugasanuser', compact('p'));
+        return view('detailpenugasanuser', compact('penugasan'));
     }
 
     public function showAdmin($id)
