@@ -6,7 +6,6 @@ use App\Models\Penugasan;
 use App\Models\AnggotaPenugasan;
 use App\Models\Tugas;
 use App\Models\User;
-// use App\Models\Jabatan; // Baris ini dihapus
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +16,6 @@ class PenugasanController extends Controller
 {
     public function index(Request $request)
     {
-        // Menghapus anggota.jabatan dari eager loading
         $query = Penugasan::with(['tugas', 'admin', 'anggota.user']);
 
         if ($request->filled('search')) {
@@ -38,9 +36,7 @@ class PenugasanController extends Controller
     {
         $tugas = Tugas::all();
         $users = User::where('role', 'user')->get();
-        // $jabatans = Jabatan::all(); // Baris ini dihapus
 
-        // Variabel jabatans dihapus dari compact
         return view('admin.tambahpenugasan', compact('tugas', 'users'));
     }
 
@@ -51,7 +47,6 @@ class PenugasanController extends Controller
             'batas_waktu_lapor' => 'required|date',
             'anggota' => 'required|array|min:1',
             'anggota.*.id_user' => 'required|exists:users,nip',
-            // Validasi id_jabatan dihapus
         ]);
 
         DB::beginTransaction();
@@ -66,7 +61,6 @@ class PenugasanController extends Controller
                 AnggotaPenugasan::create([
                     'id_penugasan' => $penugasan->id,
                     'id_user' => $item['id_user'],
-                    // id_jabatan dihapus dari proses penyimpanan
                 ]);
             }
 
@@ -80,7 +74,6 @@ class PenugasanController extends Controller
 
     public function checkExisting($kodetugas)
     {
-        // Menghapus relasi jabatan pada pengecekan data existing
         $penugasan = Penugasan::with(['anggota.user'])
             ->where('kodetugas', $kodetugas)
             ->first();
@@ -92,13 +85,15 @@ class PenugasanController extends Controller
         return response()->json(['exists' => false]);
     }
 
+    /**
+     * PERBAIKAN: Menyelaraskan nama variabel $p menjadi $penugasan agar sesuai dengan view detail user
+     */
     public function show($id)
     {
-        // Menghapus anggota.jabatan dari relasi yang diambil
-        $p = Penugasan::with(['tugas', 'admin', 'anggota.user'])->findOrFail($id);
+        $penugasan = Penugasan::with(['tugas', 'admin', 'anggota.user', 'laporan'])->findOrFail($id);
 
         if (Auth::user()->role !== 'admin' && Auth::user()->role !== 'superadmin') {
-            $isMember = $p->anggota->contains('id_user', Auth::id());
+            $isMember = $penugasan->anggota->contains('id_user', Auth::id());
             if (!$isMember) {
                 abort(403, 'Anda tidak memiliki akses ke detail penugasan ini.');
             }
@@ -109,19 +104,21 @@ class PenugasanController extends Controller
 
     public function showAdmin($id)
     {
-        // Menghapus anggota.jabatan dari relasi untuk view admin
         $p = Penugasan::with(['tugas', 'admin', 'anggota.user'])->findOrFail($id);
 
         return view('admin.detailpenugasan', compact('p'));
     }
 
+    /**
+     * PERBAIKAN UTAMA: Mengubah $penugasan menjadi $penugasans (Jamak) & memuat relasi 'laporan'
+     */
     public function indexUser()
     {
-        $penugasan = Penugasan::whereHas('anggota', function ($query) {
+        $penugasans = Penugasan::whereHas('anggota', function ($query) {
             $query->where('id_user', Auth::id());
-        })->with(['tugas', 'admin'])->orderBy('created_at', 'desc')->get();
+        })->with(['tugas', 'admin', 'laporan'])->orderBy('created_at', 'desc')->get();
 
-        return view('penugasanuser', compact('penugasan'));
+        return view('penugasanuser', compact('penugasans'));
     }
 
     public function edit($id)
@@ -129,7 +126,6 @@ class PenugasanController extends Controller
         $penugasan = Penugasan::with('anggota')->findOrFail($id);
         $tugas = Tugas::all();
         $users = User::where('role', 'user')->get();
-        // $jabatans = Jabatan::all(); // Dihapus
 
         return view('admin.tambahpenugasan', compact('penugasan', 'tugas', 'users'));
     }
@@ -149,7 +145,6 @@ class PenugasanController extends Controller
                 'batas_waktu_lapor' => $request->batas_waktu_lapor,
             ]);
 
-            // Sinkronisasi anggota: Hapus yang lama dan tambah yang baru
             AnggotaPenugasan::where('id_penugasan', $id)->delete();
             foreach ($request->anggota as $item) {
                 AnggotaPenugasan::create([
@@ -174,30 +169,21 @@ class PenugasanController extends Controller
         return redirect()->route('admin.penugasan.index')->with('success', 'Penugasan berhasil dihapus!');
     }
 
-    /**
-     * Download Template Penugasan (Format XLSX) dengan referensi Tugas dan User
-     */
     public function template()
     {
         $spreadsheet = new Spreadsheet();
 
-        // ==========================================
-        // SHEET 1: TEMPLATE UTAMA (FORM INPUT)
-        // ==========================================
         $sheetTemplate = $spreadsheet->getActiveSheet();
         $sheetTemplate->setTitle('Template Penugasan');
 
-        // Set Header Sheet 1
         $sheetTemplate->setCellValue('A1', 'Kode Tugas');
         $sheetTemplate->setCellValue('B1', 'Batas Waktu Lapor (YYYY-MM-DD)');
         $sheetTemplate->setCellValue('C1', 'NIP Anggota (Pisahkan dengan koma)');
 
-        // Set Contoh Data Sheet 1
         $sheetTemplate->setCellValue('A2', 'CONTOH-KODE-TGS');
         $sheetTemplate->setCellValue('B2', \Carbon\Carbon::now()->addDays(7)->format('Y-m-d'));
         $sheetTemplate->setCellValue('C2', '199001012024011001, 199001012024011002');
 
-        // Style Header Sheet 1
         $sheetTemplate->getStyle('A1:C1')->getFont()->setBold(true);
         $sheetTemplate->getStyle('A1:C1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFF0F0F0');
@@ -206,24 +192,17 @@ class PenugasanController extends Controller
             $sheetTemplate->getColumnDimension($columnID)->setAutoSize(true);
         }
 
-
-        // ==========================================
-        // SHEET 2: DAFTAR TUGAS (REFERENSI)
-        // ==========================================
         $sheetTugas = $spreadsheet->createSheet();
         $sheetTugas->setTitle('Daftar Tugas');
 
-        // Header Sheet 2
         $sheetTugas->setCellValue('A1', 'Kode Tugas');
         $sheetTugas->setCellValue('B1', 'Nama Tugas');
         $sheetTugas->setCellValue('C1', 'Deskripsi');
 
-        // Style Header Sheet 2 (Warna Abu-Abu Berbeda)
         $sheetTugas->getStyle('A1:C1')->getFont()->setBold(true);
         $sheetTugas->getStyle('A1:C1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE0E0E0');
 
-        // Mengambil data tugas aktif dari database
         $daftarTugas = Tugas::all();
         $rowTugas = 2;
         foreach ($daftarTugas as $tugas) {
@@ -237,24 +216,17 @@ class PenugasanController extends Controller
             $sheetTugas->getColumnDimension($columnID)->setAutoSize(true);
         }
 
-
-        // ==========================================
-        // SHEET 3: DAFTAR USER (REFERENSI)
-        // ==========================================
         $sheetUser = $spreadsheet->createSheet();
         $sheetUser->setTitle('Daftar User');
 
-        // Header Sheet 3 (Hanya NIP, Nama, dan Email sesuai permintaan)
         $sheetUser->setCellValue('A1', 'NIP');
         $sheetUser->setCellValue('B1', 'Nama');
         $sheetUser->setCellValue('C1', 'Email');
 
-        // Style Header Sheet 3
         $sheetUser->getStyle('A1:C1')->getFont()->setBold(true);
         $sheetUser->getStyle('A1:C1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setARGB('FFE0E0E0');
 
-        // Mengambil seluruh data user dari database
         $daftarUser = User::all();
         $rowUser = 2;
         foreach ($daftarUser as $user) {
@@ -268,11 +240,6 @@ class PenugasanController extends Controller
             $sheetUser->getColumnDimension($columnID)->setAutoSize(true);
         }
 
-
-        // ==========================================
-        // PROSES DOWNLOAD FILE
-        // ==========================================
-        // Kembalikan fokus ke Sheet 1 agar otomatis terbuka pertama kali
         $spreadsheet->setActiveSheetIndex(0);
 
         $writer = new Xlsx($spreadsheet);
@@ -290,9 +257,6 @@ class PenugasanController extends Controller
         exit;
     }
 
-    /**
-     * Fungsi pembantu untuk menstandarkan format tanggal Excel ke YYYY-MM-DD
-     */
     private function formatTanggalMySQL($tanggal)
     {
         if (empty($tanggal)) return null;
@@ -325,7 +289,6 @@ class PenugasanController extends Controller
 
     public function importProcess(Request $request)
     {
-        // Pastikan Anda menerima data array dari input form (sesuaikan dengan nama input di form HTML Anda)
         $penugasanData = $request->input('penugasan');
 
         if (!$penugasanData) {
@@ -333,29 +296,22 @@ class PenugasanController extends Controller
         }
 
         foreach ($penugasanData as $row) {
-            // Abaikan jika kodetugas kosong
             if (empty($row['kodetugas'])) continue;
 
-            // 1. Format tanggal menggunakan fungsi pembantu
             $batasWaktuLapor = $this->formatTanggalMySQL($row['batas_waktu_lapor']);
 
-            // 2. Simpan Data Penugasan
             $penugasan = Penugasan::create([
                 'kodetugas'         => $row['kodetugas'],
                 'batas_waktu_lapor' => $batasWaktuLapor,
-                'id_admin'          => \Illuminate\Support\Facades\Auth::user()->nip, // Admin yang mengimport
+                'id_admin'          => \Illuminate\Support\Facades\Auth::user()->nip,
             ]);
 
-            // 3. Proses NIP Anggota (jika ada)
             if (!empty($row['nip_anggota'])) {
-                // Pecah string berdasarkan koma menjadi array
                 $nipArray = explode(',', $row['nip_anggota']);
 
                 foreach ($nipArray as $nip) {
-                    // Hilangkan spasi berlebih sebelum/sesudah NIP
                     $nipBersih = trim($nip);
 
-                    // Pastikan NIP tidak kosong sebelum menyimpan
                     if (!empty($nipBersih)) {
                         \App\Models\AnggotaPenugasan::create([
                             'id_penugasan' => $penugasan->id,

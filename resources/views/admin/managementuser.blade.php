@@ -1,175 +1,127 @@
 @extends('layout.layoutadmin')
 
-@section('title', 'Manajemen Pengguna')
-
 @section('content')
-    <div class="container mx-auto px-4 py-6">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6">
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800">Daftar Pengguna</h2>
-                <p class="text-sm text-gray-500 mt-1">Kelola data seluruh pengguna sistem, admin, dan pegawai.</p>
-            </div>
-            <div class="mt-4 md:mt-0">
-                <a href="{{ route('admin.user.create') }}"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition duration-300 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Tambah Pengguna
-                </a>
-            </div>
+<div class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                Manajemen User
+            </h1>
+            <p class="text-xs font-medium text-slate-400 mt-1">Kelola data pengguna, hak akses role akun, beserta kredensial sistem.</p>
         </div>
+        <div class="flex items-center gap-3 self-end md:self-auto">
+            <a href="{{ route('admin.user.create') }}" 
+                class="flex items-center px-4 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-md shadow-blue-500/10 transition-all duration-200 hover:-translate-y-0.5">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                TAMBAH USER BARU
+            </a>
+        </div>
+    </div>
 
-        @if (session('success'))
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded shadow-sm" role="alert">
-                <div class="flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clip-rule="evenodd"></path>
-                    </svg>
-                    <p>{{ session('success') }}</p>
-                </div>
-            </div>
-        @endif
+    @if(session('success'))
+        <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-xl flex items-center gap-2 shadow-sm animate-fade-in">
+            <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            {{ session('success') }}
+        </div>
+    @endif
 
-        <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-100">
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/75 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                        <th class="py-4 px-6 text-left w-16">No</th>
+                        <th class="py-4 px-6 text-left">Nama Lengkap</th>
+                        <th class="py-4 px-6 text-left">Alamat Email</th>
+                        <th class="py-4 px-6">Role Akses</th>
+                        <th class="py-4 px-6 w-40">Aksi Dokumen</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700 text-xs font-medium">
+                    @forelse($users as $index => $user)
+                        <tr class="hover:bg-slate-50/50 transition-colors duration-150">
+                            <td class="py-4 px-6 text-slate-400 font-bold text-center">
+                                {{ $index + 1 }}
+                            </td>
+                            
+                            <td class="py-4 px-6 font-bold text-slate-800">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 font-extrabold text-[11px] border border-slate-200">
+                                        {{ strtoupper(substr($user->name, 0, 2)) }}
+                                    </div>
+                                    <span>{{ $user->name }}</span>
+                                </div>
+                            </td>
+                            
+                            <td class="py-4 px-6 text-slate-500 font-mono">
+                                {{ $user->email }}
+                            </td>
+                            
+                            <td class="py-4 px-6 text-center">
+                                @if($user->role === 'admin' || $user->role === 'superadmin')
+                                    <span class="inline-flex items-center px-2.5 py-1 text-[10px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md uppercase tracking-wider">
+                                        {{ $user->role }}
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-1 text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-md uppercase tracking-wider">
+                                        {{ $user->role }}
+                                    </span>
+                                @endif
+                            </td>
+                            
+                            <td class="py-4 px-6 text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <a href="{{ route('admin.user.edit', $user->nip) }}" 
+                                        class="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100 transition-colors shadow-sm"
+                                        title="Ubah Data Pengguna">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                    </a>
 
-            <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-
-                <form action="{{ route('admin.user.index') }}" method="GET"
-                    class="relative w-full max-w-sm flex items-center">
-                    <div class="relative w-full">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                        <input type="text" name="search" value="{{ request('search') }}"
-                            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out"
-                            placeholder="Cari NIP atau Nama...">
-                    </div>
-
-                    <button type="submit" class="hidden">Cari</button>
-                </form>
-
-                @if (request('search'))
-                    <a href="{{ route('admin.user.index') }}"
-                        class="text-sm text-red-500 hover:text-red-700 font-medium ml-4 transition">
-                        Bersihkan Pencarian
-                    </a>
-                @endif
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="min-w-full leading-normal">
-                    <thead>
-                        <tr>
-                            <th
-                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
-                                No
-                            </th>
-                            <th
-                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
-                                NIP
-                            </th>
-                            <th
-                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
-                                Nama Lengkap
-                            </th>
-                            <th
-                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
-                                Email
-                            </th>
-                            <th
-                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
-                                Role
-                            </th>
-                            <th
-                                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
-                                Aksi
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse ($users as $index => $user)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-5 py-4 bg-white text-sm text-gray-600">
-                                    {{ $index + 1 }}
-                                </td>
-                                <td class="px-5 py-4 bg-white text-sm">
-                                    <span
-                                        class="font-mono text-blue-600 font-semibold bg-blue-50 px-2 py-1 rounded">{{ $user->nip }}</span>
-                                </td>
-                                <td class="px-5 py-4 bg-white text-sm">
-                                    <p class="text-gray-900 font-semibold whitespace-no-wrap">{{ $user->name }}</p>
-                                </td>
-                                <td class="px-5 py-4 bg-white text-sm">
-                                    <p class="text-gray-600 whitespace-no-wrap">{{ $user->email }}</p>
-                                </td>
-                                <td class="px-5 py-4 bg-white text-sm">
-                                    @if ($user->role === 'superadmin')
-                                        <span
-                                            class="inline-flex px-2 py-1 text-xs font-bold rounded-md bg-purple-100 text-purple-700">Super
-                                            Admin</span>
-                                    @elseif($user->role === 'admin')
-                                        <span
-                                            class="inline-flex px-2 py-1 text-xs font-bold rounded-md bg-blue-100 text-blue-700">Admin</span>
-                                    @else
-                                        <span
-                                            class="inline-flex px-2 py-1 text-xs font-bold rounded-md bg-green-100 text-green-700">User</span>
-                                    @endif
-                                </td>
-                                <td class="px-5 py-4 bg-white text-sm text-center">
-                                    <div class="flex items-center justify-center space-x-3">
-                                        <a href="{{ route('admin.user.edit', $user->nip) }}"
-                                            class="text-blue-500 hover:text-blue-700 transition" title="Edit">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                                                </path>
-                                            </svg>
-                                        </a>
-
-                                        <form action="{{ route('admin.user.destroy', $user->nip) }}" method="POST"
-                                            onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna ini?')">
+                                    @if($user->id !== Auth::id())
+                                        <form action="{{ route('admin.user.destroy', $user->nip) }}" method="POST" 
+                                            onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini secara permanen?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-red-500 hover:text-red-700 transition"
-                                                title="Hapus">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                                    </path>
+                                            <button type="submit" 
+                                                class="flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors shadow-sm"
+                                                title="Hapus Pengguna">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                 </svg>
                                             </button>
                                         </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-5 py-8 text-center bg-white text-sm text-gray-500">
-                                    <div class="flex flex-col items-center justify-center">
-                                        <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 4v16m8-8H4"></path>
-                                        </svg>
-                                        <p>Belum ada data pengguna yang terdaftar.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="px-5 py-4 bg-white border-t border-gray-200">
-                {{-- {{ $users->links() }} --}}
-            </div>
+                                    @else
+                                        <div class="w-8 h-8 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center text-slate-300" title="Akun Anda Sedang Aktif">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                            </svg>
+                                        </div>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="py-12 text-center text-slate-400 font-medium">
+                                <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                </svg>
+                                Belum ada data pengguna terdaftar di dalam sistem.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
 @endsection

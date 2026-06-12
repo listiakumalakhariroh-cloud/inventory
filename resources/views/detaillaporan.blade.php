@@ -1,168 +1,183 @@
 @extends('layout.layout')
 
 @section('content')
-<div class="max-w-5xl mx-auto flex flex-col h-[calc(100vh-140px)] bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+<div class="max-w-5xl mx-auto space-y-6 animate-fade-in">
     
-    <div class="p-4 md:px-6 border-b bg-white flex justify-between items-center z-10 shadow-sm">
-        <div class="flex flex-col">
-            <h3 class="font-bold text-gray-900 text-lg">{{ $laporan->penugasan->tugas->nama_tugas ?? 'Diskusi Laporan' }}</h3>
-            <p class="text-xs text-gray-500 font-medium">Kode Tugas: <span class="uppercase text-blue-600">{{ $laporan->penugasan->kodetugas }}</span></p>
-        </div>
+    <div class="space-y-3 animate-slide-up">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <li>
+                    <a href="{{ route('laporan.index') }}" class="hover:text-blue-600 transition-colors flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2z"/>
+                        </svg>
+                        Riwayat Laporan
+                    </a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                </li>
+                <li class="text-slate-800 font-bold">Rincian Berkas Pengajuan</li>
+            </ol>
+        </nav>
 
-        <div class="flex items-center gap-3">
-            @if($laporan->status == 'diajukan')
-                <span class="px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-700 uppercase">Diajukan</span>
-            @elseif($laporan->status == 'revisi')
-                <span class="px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-700 uppercase animate-pulse">Revisi</span>
-            @elseif($laporan->status == 'disetujui')
-                <span class="px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700 uppercase">Disetujui</span>
-            @endif
-
-            @if(Auth::user()->role == 'admin' || Auth::user()->role == 'superadmin')
-                @if($laporan->status != 'disetujui')
-                    @if($laporan->status != 'revisi')
-                    <form action="{{ route('laporan.set_revision', $laporan->id) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="px-3 py-1.5 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-lg border border-yellow-200 hover:bg-yellow-100 transition">
-                            Minta Revisi
-                        </button>
-                    </form>
-                    @endif
-                    <form action="{{ route('laporan.approve', $laporan->id) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="px-4 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 shadow-sm transition">
-                            Setujui
-                        </button>
-                    </form>
-                @endif
-            @endif
-        </div>
-    </div>
-
-    <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50/50 space-y-6" id="chat-box">
-        
-        @php
-            $isAdmin = Auth::user()->role == 'admin' || Auth::user()->role == 'superadmin';
-        @endphp
-        <div class="flex {{ $isAdmin ? 'justify-start' : 'justify-end' }}">
-            <div class="max-w-[90%] md:max-w-[75%]">
-                <div class="flex items-center mb-1 mx-1 {{ $isAdmin ? '' : 'justify-end' }}">
-                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                        LAPORAN AWAL • {{ $laporan->created_at->format('H:i') }}
-                    </span>
-                </div>
-                <div class="p-4 shadow-sm text-sm {{ $isAdmin ? 'bg-white text-gray-800 border border-gray-200 rounded-2xl rounded-tl-none' : 'bg-blue-600 text-white rounded-2xl rounded-tr-none' }}">
-                    <p class="whitespace-pre-line leading-relaxed">{{ $laporan->teks_laporan }}</p>
-                    
-                    @php
-                        $initialFiles = $laporan->files->filter(function($f) use ($laporan) {
-                            return $f->created_at->format('Y-m-d H:i:s') === $laporan->created_at->format('Y-m-d H:i:s');
-                        });
-                    @endphp
-
-                    @if($initialFiles->count() > 0)
-                    <div class="mt-3 space-y-2 {{ $isAdmin ? 'border-gray-100' : 'border-blue-500' }} border-t pt-3">
-                        @foreach($initialFiles as $file)
-                            <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank" class="flex items-center p-2.5 rounded-lg transition {{ $isAdmin ? 'bg-gray-50 hover:bg-blue-50 border border-gray-200 text-blue-600 group' : 'bg-blue-700 hover:bg-blue-800 text-white border border-blue-500' }}">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                                <span class="text-xs font-medium truncate {{ $isAdmin ? 'group-hover:text-blue-700 text-gray-700' : '' }}">{{ $file->file_name }}</span>
-                            </a>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div>
+                <span class="text-[10px] font-black text-blue-600 bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-md uppercase tracking-wider font-mono">
+                    ID LAPORAN: #LPR-{{ $laporan->id }}
+                </span>
+                <h1 class="text-xl md:text-2xl font-black text-slate-900 tracking-tight mt-2 leading-tight">
+                    {{ $laporan->penugasan->tugas->nama_tugas ?? 'Detail Laporan Penugasan' }}
+                </h1>
+                <p class="text-xs font-medium text-slate-400 mt-1">Diajukan ke database log sistem DPU Kabupaten Semarang.</p>
             </div>
-        </div>
-
-        @foreach($laporan->chats as $chat)
-        <div class="flex {{ $chat->id_user == Auth::id() ? 'justify-end' : 'justify-start' }}">
-            <div class="max-w-[90%] md:max-w-[75%]">
-                <div class="flex items-center mb-1 mx-1 {{ $chat->id_user == Auth::id() ? 'justify-end' : '' }}">
-                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-                        {{ $chat->user->name }} • {{ $chat->created_at->format('H:i') }}
-                    </span>
-                </div>
-                <div class="p-4 shadow-sm text-sm {{ $chat->id_user == Auth::id() ? 'bg-blue-600 text-white rounded-2xl rounded-tr-none' : 'bg-white text-gray-800 border border-gray-200 rounded-2xl rounded-tl-none' }}">
-                    <p class="whitespace-pre-line leading-relaxed">{{ $chat->pesan }}</p>
-                    
-                    @php
-                        $chatFiles = $laporan->files->filter(function($f) use ($chat) {
-                            return $f->created_at->format('Y-m-d H:i:s') === $chat->created_at->format('Y-m-d H:i:s');
-                        });
-                    @endphp
-
-                    @if($chatFiles->count() > 0)
-                    <div class="mt-3 space-y-2 {{ $chat->id_user == Auth::id() ? 'border-blue-500' : 'border-gray-100' }} border-t pt-3">
-                        @foreach($chatFiles as $file)
-                        <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank" class="flex items-center p-2.5 rounded-lg transition {{ $chat->id_user == Auth::id() ? 'bg-blue-700 hover:bg-blue-800 text-white border border-blue-500' : 'bg-gray-50 hover:bg-blue-50 border border-gray-200 text-blue-600 group' }}">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                            <span class="text-xs font-medium truncate {{ $chat->id_user != Auth::id() ? 'group-hover:text-blue-700 text-gray-700' : '' }}">{{ $file->file_name }}</span>
-                        </a>
-                        @endforeach
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-        @endforeach
-    </div>
-
-    @if($laporan->status != 'disetujui')
-    <div class="p-3 md:p-4 bg-white border-t border-gray-200">
-        <form action="{{ route('laporan.chat.store', $laporan->id) }}" method="POST" enctype="multipart/form-data" class="flex items-end gap-2 relative">
-            @csrf
             
-            <label class="cursor-pointer flex-shrink-0 w-11 h-11 flex items-center justify-center bg-gray-100 text-gray-500 rounded-full hover:bg-blue-100 hover:text-blue-600 transition" title="Lampirkan File">
-                <svg class="w-5 h-5 transform rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                <input type="file" name="file_baru" class="hidden" id="file_input" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx" onchange="showFileName(this)">
-            </label>
+            <div class="self-start md:self-auto shrink-0">
+                @if($laporan->status === 'disetujui')
+                    <span class="px-4 py-2 text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl uppercase tracking-wider shadow-sm">VALID / DISETUJUI</span>
+                @elseif($laporan->status === 'revisi')
+                    <span class="px-4 py-2 text-xs font-black text-amber-700 bg-amber-50 border border-amber-100 rounded-xl uppercase tracking-wider shadow-sm animate-pulse">PERLU REVISI</span>
+                @elseif($laporan->status === 'diajukan' || $laporan->status === 'menunggu')
+                    <span class="px-4 py-2 text-xs font-black text-blue-700 bg-blue-50 border border-blue-100 rounded-xl uppercase tracking-wider shadow-sm">SEDANG DITINJAU</span>
+                @else
+                    <span class="px-4 py-2 text-xs font-black text-slate-600 bg-slate-50 border border-slate-200 rounded-xl uppercase tracking-wider shadow-sm">BELUM DIAJUKAN</span>
+                @endif
+            </div>
+        </div>
+    </div>
 
-            <div class="flex-1 relative">
-                <div id="file_indicator" class="hidden absolute -top-10 left-0 bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-blue-200 shadow-sm flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                    <span id="file_name_display" class="truncate max-w-[150px] md:max-w-[300px]"></span>
-                    <button type="button" onclick="clearFile()" class="text-red-500 hover:text-red-700 ml-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        
+        <div class="lg:col-span-2 space-y-6 animate-slide-up" style="animation-delay: 100ms;">
+            
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Uraian & Catatan Progress Kerja Agen
+                </h3>
+                <div class="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-5 rounded-xl border border-slate-100 shadow-inner leading-relaxed">
+                    {!! nl2br(e($laporan->teks_laporan)) !!}
                 </div>
-
-                <textarea name="pesan" rows="1" required placeholder="Ketik pesan balasan atau catatan revisi..." 
-                    class="w-full bg-gray-100 border-transparent focus:border-blue-500 focus:bg-white focus:ring-1 rounded-2xl px-5 py-3 text-sm resize-none overflow-hidden" 
-                    style="min-height: 44px;"></textarea>
             </div>
 
-            <button type="submit" class="flex-shrink-0 w-11 h-11 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition shadow-md">
-                <svg class="w-5 h-5 transform rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path></svg>
-            </button>
-        </form>
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    Lampiran Dokumentasi / Berkas Pendukung Fisik
+                </h3>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @forelse($laporan->files ?? [] as $file)
+                        <div class="flex items-center justify-between p-3.5 bg-white border border-slate-200/80 rounded-xl hover:border-blue-400 hover:shadow-sm transition-all group">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0 font-mono text-[10px] font-black uppercase tracking-wider">
+                                    {{ pathinfo($file->file_path, PATHINFO_EXTENSION) ?: 'DOC' }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                                        {{ basename($file->file_path) }}
+                                    </p>
+                                    <p class="text-[9px] font-mono text-slate-400 uppercase mt-0.5">Berkas Lampiran</p>
+                                </div>
+                            </div>
+                            
+                            <a href="{{ asset('storage/' . $file->file_path) }}" download
+                               class="p-2 bg-slate-50 group-hover:bg-slate-900 group-hover:text-white rounded-lg text-slate-400 transition-colors shadow-sm"
+                               title="Unduh Berkas Lampiran Ini">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                            </a>
+                        </div>
+                    @empty
+                        <div class="col-span-1 sm:col-span-2 text-center py-6 text-slate-400 italic text-xs">
+                            Tidak ada file lampiran berkas dukung digital dalam pengajuan laporan ini.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+        </div>
+
+        <div class="space-y-6 animate-slide-up" style="animation-delay: 150ms;">
+            
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-4">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Kronologi Validasi
+                </h3>
+                
+                <div class="space-y-4 text-xs font-medium">
+                    <div class="space-y-1">
+                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Tanggal Pengajuan Berkas</span>
+                        <span class="text-slate-800 font-bold block bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg font-mono">
+                            {{ \Carbon\Carbon::parse($laporan->created_at)->locale('id')->translatedFormat('d F Y, H:i') }} WIB
+                        </span>
+                    </div>
+
+                    <div class="space-y-1">
+                        <span class="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Pembaruan Verifikasi Terakhir</span>
+                        <span class="text-slate-800 font-bold block bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg font-mono">
+                            {{ \Carbon\Carbon::parse($laporan->updated_at)->locale('id')->translatedFormat('d F Y, H:i') }} WIB
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm space-y-4">
+                <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Rekomendasi Tindakan DSS
+                </h3>
+
+                @if($laporan->status === 'revisi')
+                    <div class="bg-amber-50/50 border border-amber-100 p-4 rounded-xl text-center space-y-3 animate-pulse">
+                        <p class="text-xs font-semibold text-amber-800 leading-normal">
+                            Laporan membutuhkan revisi instan. Segera klik tautan di bawah untuk melakukan koreksi berkas penugasan.
+                        </p>
+                        <a href="{{ route('laporan.create', $laporan->id_penugasan) }}" 
+                           class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-amber-500/10">
+                            PERBAIKI DOKUMEN NOW
+                        </a>
+                    </div>
+                @elseif($laporan->status === 'disetujui')
+                    <div class="bg-emerald-50/40 border border-emerald-100 p-4 rounded-xl text-center space-y-2">
+                        <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+                        <p class="text-xs font-black text-emerald-800 uppercase tracking-wider">ARSIP LAPORAN KUAT</p>
+                        <p class="text-[11px] font-medium text-emerald-600/80 leading-normal">Pekerjaan divalidasi penuh. Tidak ada aksi lanjutan yang diperlukan dari akun Anda.</p>
+                    </div>
+                @else
+                    <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center space-y-2 shadow-inner">
+                        <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-1 animate-spin-slow">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18"/></svg>
+                        </div>
+                        <p class="text-xs font-bold text-slate-800">Menunggu Antrean</p>
+                        <p class="text-[11px] font-medium text-slate-400 leading-normal">Data laporan terkunci aman dalam antrean reviu berkas fisik DPU Kabupaten Semarang.</p>
+                    </div>
+                @endif
+            </div>
+
+        </div>
+        
     </div>
-    @else
-    <div class="p-4 bg-green-50 border-t border-green-200 text-center flex flex-col items-center justify-center h-[73px]">
-        <p class="text-sm font-bold text-green-700 uppercase tracking-widest flex items-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            Laporan Telah Disetujui
-        </p>
-    </div>
-    @endif
 </div>
 
-<script>
-    // Selalu gulir otomatis ke pesan chat paling bawah saat halaman dimuat
-    var chatBox = document.getElementById("chat-box");
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    // Fungsi untuk menampilkan nama file yang akan diupload di atas kotak teks
-    function showFileName(input) {
-        if (input.files && input.files[0]) {
-            document.getElementById('file_name_display').textContent = input.files[0].name;
-            document.getElementById('file_indicator').classList.remove('hidden');
-        }
-    }
-
-    // Fungsi untuk membatalkan pilihan file lampiran
-    function clearFile() {
-        document.getElementById('file_input').value = "";
-        document.getElementById('file_indicator').classList.add('hidden');
-    }
-</script>
+<style>
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+    .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-spin-slow { animation: spin 12s linear infinite; }
+</style>
 @endsection

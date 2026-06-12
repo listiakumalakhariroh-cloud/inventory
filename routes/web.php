@@ -20,9 +20,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
 
     // Dashboard User
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'indexUser'])->name('dashboard');
 
     // Rute Penugasan User
     Route::get('/penugasan', [PenugasanController::class, 'indexUser'])->name('penugasan.index');

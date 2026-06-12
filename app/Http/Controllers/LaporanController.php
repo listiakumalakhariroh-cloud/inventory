@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Storage;
 class LaporanController extends Controller
 {
     // Menampilkan daftar laporan (Admin melihat semua, Anggota melihat miliknya)
+    // app/Http/Controllers/LaporanController.php
+
     public function index(Request $request)
     {
         // Mulai kueri dengan memuat relasi yang diperlukan
@@ -35,19 +37,15 @@ class LaporanController extends Controller
             });
         }
 
-        // Logika Filter Status
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        // Urutkan berdasarkan yang terbaru diajukan
+        // Eksekusi data laporan terbaru
         $laporan = $query->orderBy('updated_at', 'desc')->get();
 
+        // Kirimkan variabel $laporan ke view
         return view('admin.laporan', compact('laporan'));
     }
 
     // Detail Laporan (Halaman Chat & Riwayat File)
-   // Menampilkan detail laporan dan halaman chat revisi untuk user
+    // Menampilkan detail laporan dan halaman chat revisi untuk user
     public function show($id)
     {
         // Pastikan relasi yang dipanggil lengkap untuk memuat chat, file, dan data tugas
@@ -114,7 +112,7 @@ class LaporanController extends Controller
         ]);
 
         $laporan = Laporan::findOrFail($id);
-        
+
         // KUNCI WAKTU SAAT INI (Agar chat dan file punya detik yang 100% sama)
         $waktuSekarang = now();
 
@@ -131,7 +129,7 @@ class LaporanController extends Controller
         if ($request->hasFile('file_baru')) {
             $file = $request->file('file_baru');
             $path = $file->store('laporan_bukti', 'public');
-            
+
             LaporanFile::create([
                 'id_laporan' => $laporan->id,
                 'file_name' => $file->getClientOriginalName(),
@@ -176,7 +174,7 @@ class LaporanController extends Controller
     public function setRevision($id)
     {
         $laporan = Laporan::findOrFail($id);
-        
+
         // Ubah status menjadi revisi
         $laporan->update(['status' => 'revisi']);
 
@@ -187,7 +185,7 @@ class LaporanController extends Controller
     public function approve($id)
     {
         $laporan = Laporan::findOrFail($id);
-        
+
         // Ubah status menjadi disetujui
         $laporan->update(['status' => 'disetujui']);
 
@@ -207,4 +205,35 @@ class LaporanController extends Controller
         // Mengirimkan variabel $laporans ke halaman laporanuser.blade.php
         return view('laporanuser', compact('laporans'));
     }
+
+    public function showAdmin($id)
+{
+    // Eager loading relasi berantai untuk menghindari error relasi tidak ditemukan
+    $laporan = \App\Models\Laporan::with([
+        'penugasan.tugas', 
+        'penugasan.anggota.user',
+        'penugasan.admin'
+    ])->findOrFail($id);
+
+    return view('admin.detaillaporan', compact('laporan'));
+}
+
+/**
+ * Memproses Keputusan Audit Admin (Setujui / Revisi)
+ */
+public function updateStatus(Request $request, $id)
+{
+    $request->validate([
+        'status' => 'required|in:disetujui,revisi',
+    ]);
+
+    $laporan = \App\Models\Laporan::findOrFail($id);
+    $laporan->update([
+        'status' => $request->status
+    ]);
+
+    // Berikan feedback kembali ke halaman manajemen laporan
+    return redirect()->route('admin.laporan.index')
+        ->with('success', 'Status verifikasi laporan berhasil diperbarui menjadi: ' . strtoupper($request->status));
+}
 }
