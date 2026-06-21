@@ -14,6 +14,9 @@ class AnggotaPenugasan extends Model
     protected $fillable = [
         'id_penugasan',
         'id_user', // Kolom ini sekarang menyimpan NIP (string)
+        'status_keterlambatan',
+        'alasan_keterlambatan',
+        'custom_deadline',
     ];
 
     /**

@@ -15,86 +15,118 @@
                     </a>
                 </li>
                 <li>
-                    <svg class="w-3 h-3 text-slate-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        <span class="ml-1 md:ml-2">Kirim Laporan</span>
+                    </div>
                 </li>
-                <li class="text-slate-800 font-bold">Kirim Rekapitulasi</li>
             </ol>
         </nav>
-
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
-            <div>
-                <h1 class="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Kirim Laporan Proyek</h1>
-                <p class="text-xs font-medium text-slate-400 mt-1">Isi rincian capaian fisik dan lampirkan berkas bukti dokumentasi lapangan DPU.</p>
-            </div>
+        
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tight">Kirim Data Laporan</h1>
+            <p class="text-sm font-medium text-slate-500 mt-1">Lengkapi form di bawah ini untuk melaporkan hasil penugasan Anda.</p>
         </div>
     </div>
 
-    <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm animate-slide-up" style="animation-delay: 50ms;">
-        <div class="flex items-start gap-4">
-            <div class="bg-slate-900 p-3 rounded-xl text-yellow-400 shadow-sm shrink-0">
-                <svg class="w-5 h-5 shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-            <div class="min-w-0 space-y-1">
-                <span class="font-mono font-bold text-blue-600 text-[11px] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded shadow-inner">
-                    {{ $penugasan->kodetugas }}
-                </span>
-                <h3 class="text-sm font-black text-slate-800 truncate mt-1">
-                    {{ $penugasan->tugas->nama_tugas ?? 'Nama Tugas Tidak Ditemukan' }}
-                </h3>
-                <p class="text-[11px] font-medium text-slate-400">
-                    Batas Waktu Pelaporan: <span class="font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 font-mono text-xs">{{ \Carbon\Carbon::parse($penugasan->batas_waktu_lapor)->locale('id')->translatedFormat('d F Y') }}</span>
-                </p>
-            </div>
+    @if(session('success'))
+    <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-start gap-3">
+        <div class="p-2 bg-emerald-500/10 rounded-xl">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-sm font-bold text-emerald-800">Berhasil!</h3>
+            <p class="text-sm font-medium text-emerald-600 mt-0.5">{{ session('success') }}</p>
         </div>
     </div>
+    @endif
 
-    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden animate-slide-up" style="animation-delay: 100ms;">
-        <form action="{{ route('laporan.store') }}" method="POST" enctype="multipart/form-data" class="p-6 md:p-8 space-y-6">
+    @if(session('error'))
+    <div class="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3">
+        <div class="p-2 bg-red-500/10 rounded-xl">
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-sm font-bold text-red-800">Terjadi Kesalahan</h3>
+            <p class="text-sm font-medium text-red-600 mt-0.5">{{ session('error') }}</p>
+        </div>
+    </div>
+    @endif
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden relative">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+
+        @if(!$is_waktu_habis)
+        <form action="{{ route('laporan.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
-            
             <input type="hidden" name="id_penugasan" value="{{ $penugasan->id }}">
 
-            <div class="space-y-2">
-                <label for="teks_laporan" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Keterangan / Catatan Laporan <span class="text-red-500">*</span></label>
-                <textarea id="teks_laporan" name="teks_laporan" rows="6" required
-                    class="w-full px-4 py-3 text-xs font-medium text-slate-800 rounded-xl border border-slate-200 focus:bg-white bg-slate-50/50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all outline-none resize-none leading-relaxed"
-                    placeholder="Jelaskan secara logis, singkat, dan terstruktur terkait poin kemajuan fisik yang telah selesai dikerjakan..."></textarea>
-                @error('teks_laporan')
-                    <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="space-y-2">
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Upload File Bukti Lapangan <span class="text-red-500">*</span></label>
-                <p class="text-[11px] font-medium text-slate-400">Ekstensi dokumen yang didukung: Gambar (.jpg, .png), PDF, Word, atau Excel. Batas ukuran maks. 5MB per file.</p>
+            <div class="p-6 sm:p-8 space-y-6">
                 
-                <div class="mt-1 flex justify-center px-6 pt-8 pb-8 border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-2xl hover:bg-slate-50 hover:border-blue-500 transition-all cursor-pointer relative group">
-                    <div class="space-y-2 text-center">
-                        <svg class="mx-auto h-12 w-12 text-slate-400 group-hover:scale-110 group-hover:text-blue-500 transition-all" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-start gap-4">
+                    <div class="p-3 bg-white rounded-xl shadow-sm border border-slate-200">
+                        <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        <div class="flex text-xs text-slate-600 justify-center font-semibold">
-                            <label for="files" class="relative cursor-pointer bg-white rounded-md text-blue-600 hover:text-blue-700 focus-within:outline-none">
-                                <span>Pilih Dokumen</span>
-                                <input id="files" name="files[]" type="file" class="sr-only" multiple required accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx">
-                            </label>
-                            <p class="pl-1 text-slate-400">atau seret dan lepas berkas ke sini</p>
-                        </div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider" id="file-info">Belum ada file yang dipilih</p>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Informasi Tugas</h4>
+                        <p class="text-base font-bold text-slate-800">{{ $penugasan->tugas->nama_tugas }}</p>
+                        <p class="text-sm font-medium text-slate-500 mt-1">Batas Waktu: <span class="text-indigo-600">{{ \Carbon\Carbon::parse($anggota->custom_deadline ?? $penugasan->batas_lapor)->format('d M Y, H:i') }}</span></p>
                     </div>
                 </div>
-                @error('files.*')
-                    <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
-                @enderror
-                @error('files')
-                    <p class="mt-1 text-xs font-semibold text-red-600">{{ $message }}</p>
-                @enderror
+
+                <div class="space-y-1">
+                    <label for="judul" class="block text-sm font-bold text-slate-700">Judul Laporan <span class="text-red-500">*</span></label>
+                    <input type="text" name="judul" id="judul" required value="{{ old('judul') }}"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-slate-800 placeholder-slate-400 bg-slate-50 focus:bg-white"
+                        placeholder="Contoh: Laporan Penyelesaian Desain UI/UX">
+                    @error('judul')
+                        <p class="text-xs font-bold text-red-500 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="space-y-1">
+                    <label for="deskripsi" class="block text-sm font-bold text-slate-700">Deskripsi Hasil <span class="text-red-500">*</span></label>
+                    <textarea name="deskripsi" id="deskripsi" rows="5" required
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-sm font-medium text-slate-800 placeholder-slate-400 bg-slate-50 focus:bg-white resize-none"
+                        placeholder="Jelaskan secara detail hasil pekerjaan yang telah Anda selesaikan...">{{ old('deskripsi') }}</textarea>
+                    @error('deskripsi')
+                        <p class="text-xs font-bold text-red-500 mt-1">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-slate-700">Lampiran Berkas (Opsional)</label>
+                    <div class="relative group">
+                        <input type="file" name="file_laporan[]" id="files" multiple
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip">
+                        <div class="w-full px-6 py-8 border-2 border-dashed border-slate-200/80 rounded-xl hover:border-blue-400 hover:shadow-sm transition-all group animate-pulse">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0 font-mono text-[10px] font-black uppercase tracking-wider">
+                                    BERKAS
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                                        Pilih Berkas Lampiran
+                                    </p>
+                                    <p class="text-[9px] font-mono text-slate-400 uppercase mt-0.5" id="file-info">Belum ada file yang dipilih</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                <a href="{{ route('penugasan.index') }}" class="px-5 py-2.5 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors">
+            <div class="p-6 sm:p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                <a href="{{ route('penugasan.index') }}" class="px-6 py-2.5 text-xs font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors">
                     BATALKAN
                 </a>
                 <button type="submit" class="px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-md shadow-blue-500/10 transition-all duration-200 hover:-translate-y-0.5">
@@ -102,6 +134,22 @@
                 </button>
             </div>
         </form>
+        @else
+        <div class="p-12 text-center space-y-4">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <h3 class="text-sm font-bold text-slate-800">Waktu Pengiriman Laporan Habis</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                Anda tidak dapat mengirimkan laporan baru karena batas waktu pengerjaan tugas telah terlampaui. Silakan hubungi admin Anda untuk mengajukan perpanjangan batas lapor.
+            </p>
+            <div class="pt-2">
+                <a href="{{ route('penugasan.index') }}" class="inline-flex px-6 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl uppercase tracking-wider transition-all">
+                    Kembali Ke Penugasan
+                </a>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 
@@ -120,8 +168,7 @@
 <style>
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
-    .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-    .animate-slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+    .animate-slide-up { animation: slideUp 0.4s ease-out forwards; }
 </style>
 @endsection

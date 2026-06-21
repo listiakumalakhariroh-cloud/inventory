@@ -46,6 +46,34 @@
         </div>
     </div>
 
+    @if(session('success'))
+    <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-start gap-3 animate-slide-up">
+        <div class="p-2 bg-emerald-500/10 rounded-xl">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-sm font-bold text-emerald-800">Berhasil!</h3>
+            <p class="text-sm font-medium text-emerald-600 mt-0.5">{{ session('success') }}</p>
+        </div>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 animate-slide-up">
+        <div class="p-2 bg-red-500/10 rounded-xl">
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-sm font-bold text-red-800">Gagal</h3>
+            <p class="text-sm font-medium text-red-600 mt-0.5">{{ session('error') }}</p>
+        </div>
+    </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         
         <div class="lg:col-span-2 space-y-6 animate-slide-up" style="animation-delay: 100ms;">
@@ -57,8 +85,8 @@
                     </svg>
                     Uraian & Catatan Progress Kerja Agen
                 </h3>
-                <div class="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-5 rounded-xl border border-slate-100 shadow-inner leading-relaxed">
-                    {!! nl2br(e($laporan->teks_laporan)) !!}
+                <div class="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-line bg-slate-50/50 p-5 rounded-xl border border-slate-100 shadow-inner">
+                    {!! nl2br(e($laporan->teks_laporan ?? $laporan->deskripsi)) !!}
                 </div>
             </div>
 
@@ -101,6 +129,54 @@
                 </div>
             </div>
 
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-3">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    Ruang Diskusi & Revisi
+                </h3>
+                
+                <div class="space-y-4 max-h-96 overflow-y-auto pr-2 pb-2">
+                    @forelse($laporan->chats ?? [] as $chat)
+                        @if($chat->is_from_admin_panel)
+                            <div class="flex flex-col items-start gap-1 w-full">
+                                <span class="text-[10px] font-bold text-slate-400 ml-2 uppercase tracking-wider">Reviewer / Admin • {{ \Carbon\Carbon::parse($chat->created_at)->format('d M, H:i') }}</span>
+                                <div class="bg-slate-100 text-slate-700 px-4 py-3 rounded-2xl rounded-tl-sm text-xs font-medium border border-slate-200/60 max-w-[85%] leading-relaxed">
+                                    {{ $chat->pesan }}
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex flex-col items-end gap-1 w-full">
+                                <span class="text-[10px] font-bold text-slate-400 mr-2 uppercase tracking-wider">Anda • {{ \Carbon\Carbon::parse($chat->created_at)->format('d M, H:i') }}</span>
+                                <div class="bg-blue-600 text-white px-4 py-3 rounded-2xl rounded-tr-sm text-xs font-medium shadow-sm shadow-blue-500/20 max-w-[85%] leading-relaxed">
+                                    {{ $chat->pesan }}
+                                </div>
+                            </div>
+                        @endif
+                    @empty
+                        <div class="text-center py-8">
+                            <div class="w-12 h-12 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            </div>
+                            <p class="text-slate-400 text-xs font-medium">Belum ada catatan revisi atau diskusi.</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                @if($laporan->status !== 'revisi')
+                <form action="{{ route('laporan.chat.store') }}" method="POST" class="mt-4 flex gap-2 border-t border-slate-100 pt-4">
+                    @csrf
+                    <input type="hidden" name="id_laporan" value="{{ $laporan->id }}">
+                    <input type="text" name="pesan" placeholder="Ketik pesan atau tanggapan revisi Anda di sini..." required
+                           class="w-full px-4 py-2.5 text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                    <button type="submit" class="shrink-0 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm shadow-blue-500/20 text-xs font-black uppercase tracking-wider transition-all hover:-translate-y-0.5">
+                        Kirim
+                    </button>
+                </form>
+                @endif
+            </div>
+
         </div>
 
         <div class="space-y-6 animate-slide-up" style="animation-delay: 150ms;">
@@ -139,14 +215,27 @@
                 </h3>
 
                 @if($laporan->status === 'revisi')
-                    <div class="bg-amber-50/50 border border-amber-100 p-4 rounded-xl text-center space-y-3 animate-pulse">
+                    <div class="bg-amber-50/50 border border-amber-100 p-4 rounded-xl space-y-4">
                         <p class="text-xs font-semibold text-amber-800 leading-normal">
-                            Laporan membutuhkan revisi instan. Segera klik tautan di bawah untuk melakukan koreksi berkas penugasan.
+                            Laporan membutuhkan tindakan revisi. Anda dapat mengunggah berkas baru serta mengirimkan tanggapan perbaikan secara instan di bawah ini.
                         </p>
-                        <a href="{{ route('laporan.create', $laporan->id_penugasan) }}" 
-                           class="w-full inline-flex justify-center items-center px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-amber-500/10">
-                            PERBAIKI DOKUMEN NOW
-                        </a>
+                        
+                        <form action="{{ route('laporan.submitRevisi', $laporan->id) }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+                            @csrf
+                            <div>
+                                <label class="block text-[10px] font-bold text-amber-900 uppercase tracking-wider mb-1">Catatan Perbaikan</label>
+                                <textarea name="pesan" rows="3" required class="w-full px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-amber-500 outline-none resize-none" placeholder="Tulis penjelasan singkat mengenai perbaikan laporan Anda..."></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-[10px] font-bold text-amber-900 uppercase tracking-wider mb-1">Lampirkan Berkas Baru</label>
+                                <input type="file" name="file_laporan[]" multiple class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer">
+                            </div>
+                            
+                            <button type="submit" class="w-full px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-amber-500/10">
+                                KIRIM REVISI LAPORAN
+                            </button>
+                        </form>
                     </div>
                 @elseif($laporan->status === 'disetujui')
                     <div class="bg-emerald-50/40 border border-emerald-100 p-4 rounded-xl text-center space-y-2">

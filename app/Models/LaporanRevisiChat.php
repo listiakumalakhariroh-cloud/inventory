@@ -14,7 +14,8 @@ class LaporanRevisiChat extends Model
     protected $fillable = [
         'id_laporan', 
         'id_user', // Kolom ini sekarang menyimpan NIP (string)
-        'pesan'
+        'pesan', 
+        'is_from_admin_panel',
     ];
 
     public function laporan()
