@@ -1,28 +1,41 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\TugasController;
 use App\Http\Controllers\PenugasanController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DailyProgressReportController;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [LoginController::class, 'login']);
+
+    Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    Route::get('/reset-password/{token}', [ResetPasswordController::class, 'create'])->name('password.reset');
+    Route::post('/reset-password', [ResetPasswordController::class, 'store'])->name('password.update');
+});
+
+Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'indexUser'])->name('dashboard');
 
     Route::get('/penugasan', [PenugasanController::class, 'indexUser'])->name('penugasan.index');
-    Route::get('/penugasan/{id}', [PenugasanController::class, 'show'])->name('penugasan.show');
+    Route::get('/penugasan/{id}', [DailyProgressReportController::class, 'show'])->name('penugasan.show');
+
+    Route::post('/penugasan/{id_penugasan}/laporan-harian', [DailyProgressReportController::class, 'store'])->name('daily-progress.store');
+    Route::get('/laporan-harian/pending-summary', [DailyProgressReportController::class, 'pendingSummary'])->name('daily-progress.pending-summary');
 
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
     Route::get('/laporan/buat/{id_penugasan}', [LaporanController::class, 'create'])->name('laporan.create');
@@ -35,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:admin,superadmin'])->prefix('admin')->name('admin.')->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/notifikasi/perpanjangan', [LaporanController::class, 'pendingExtensionSummary'])->name('extension.pending-summary');
 
         Route::prefix('pengguna')->name('user.')->group(function () {
             Route::get('/', [UserController::class, 'index'])->name('index');
@@ -44,7 +58,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{nip}', [UserController::class, 'update'])->name('update');
             Route::delete('/{nip}', [UserController::class, 'destroy'])->name('destroy');
         });
-        
+
         Route::prefix('tugas')->name('tugas.')->group(function () {
             Route::get('/', [TugasController::class, 'index'])->name('index');
             Route::get('/template', [TugasController::class, 'template'])->name('template');
@@ -69,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{id}', [PenugasanController::class, 'showAdmin'])->name('show');
             Route::get('/{id}/edit', [PenugasanController::class, 'edit'])->name('edit');
             Route::put('/{id}', [PenugasanController::class, 'update'])->name('update');
+            Route::put('/{id}/deadline', [PenugasanController::class, 'updateDeadline'])->name('updateDeadline');
             Route::delete('/{id}', [PenugasanController::class, 'destroy'])->name('destroy');
         });
 
@@ -76,6 +91,5 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/laporan/detail/{id}', [LaporanController::class, 'showAdmin'])->name('laporan.show');
         Route::put('/laporan/{id}/status', [LaporanController::class, 'updateStatus'])->name('laporan.updateStatus');
         Route::post('/laporan/chat', [LaporanController::class, 'storeChat'])->name('laporan.chat.store');
-        
     });
 });

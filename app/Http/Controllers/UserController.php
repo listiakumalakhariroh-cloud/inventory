@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -17,46 +18,49 @@ class UserController extends Controller
     {
         $query = User::query();
 
-        // Fitur pencarian berdasarkan NIP atau Nama
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('nip', 'like', "%{$search}%");
+                  ->orWhere('nip', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
         }
 
-        // Ambil data terbaru (bisa diubah menjadi paginate() jika data sangat banyak)
         $users = $query->orderBy('created_at', 'desc')->get();
 
         return view('admin.managementuser', compact('users'));
     }
-
 
     /**
      * Menyimpan data pengguna baru ke database.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'nip'      => 'required|unique:users,nip|numeric',
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
-            'role'     => 'required|in:superadmin,admin,user',
+        $validated = $request->validate([
+            'nip' => ['required', 'string', 'max:20', 'unique:users,nip'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'role' => ['nullable', 'in:superadmin,admin,user'],
         ], [
+            'nip.required' => 'NIP wajib diisi.',
             'nip.unique' => 'NIP ini sudah terdaftar di sistem.',
+            'nip.max' => 'NIP maksimal 20 karakter.',
+            'email.required' => 'Email wajib diisi.',
             'email.unique' => 'Email ini sudah digunakan.',
+            'password.required' => 'Password wajib diisi.',
             'password.min' => 'Password minimal harus 6 karakter.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'role.in' => 'Role tidak valid.',
         ]);
 
         DB::beginTransaction();
         try {
             User::create([
-                'nip'      => $request->nip,
-                'name'     => $request->name,
-                'email'    => $request->email,
-                'password' => Hash::make($request->password), // Password wajib di-hash
-                'role'     => $request->role,
+                'nip' => trim($validated['nip']),
+                'name' => $validated['name'],
+                'email' => strtolower($validated['email']),
+                'password' => Hash::make($validated['password']),
+                'role' => $validated['role'] ?? 'user',
             ]);
 
             DB::commit();
@@ -68,21 +72,21 @@ class UserController extends Controller
     }
 
     /**
-     * Menampilkan form tambah pengguna baru (Mode Tambah User).
+     * Menampilkan form tambah pengguna baru.
      */
     public function create()
     {
-        return view('admin.formuser'); // Menggunakan view gabungan
+        return view('admin.formuser-clean');
     }
 
     /**
-     * Menampilkan form edit untuk pengguna tertentu (Mode Edit Pengguna).
+     * Menampilkan form edit untuk pengguna tertentu.
      */
     public function edit($nip)
     {
         $user = User::where('nip', $nip)->firstOrFail();
-        
-        return view('admin.formuser', compact('user')); // Mengirim data user ke view gabungan
+
+        return view('admin.formuser-clean', compact('user'));
     }
 
     /**
@@ -92,27 +96,44 @@ class UserController extends Controller
     {
         $user = User::where('nip', $nip)->firstOrFail();
 
-        $request->validate([
-            'nip'      => ['required', 'numeric', Rule::unique('users')->ignore($user->id)],
-            'name'     => 'required|string|max:255',
-            'email'    => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role'     => 'required|in:superadmin,admin,user',
-            // Password tidak required saat update, hanya jika diisi saja
-            'password' => 'nullable|string|min:6|confirmed', 
+        $validated = $request->validate([
+            'nip' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('users', 'nip')->ignore($user->nip, 'nip'),
+            ],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->nip, 'nip'),
+            ],
+            'role' => ['required', 'in:superadmin,admin,user'],
+            'password' => ['nullable', 'string', 'min:6', 'confirmed'],
+        ], [
+            'nip.required' => 'NIP wajib diisi.',
+            'nip.unique' => 'NIP ini sudah terdaftar di sistem.',
+            'nip.max' => 'NIP maksimal 20 karakter.',
+            'email.required' => 'Email wajib diisi.',
+            'email.unique' => 'Email ini sudah digunakan.',
+            'password.min' => 'Password minimal harus 6 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         DB::beginTransaction();
         try {
             $updateData = [
-                'nip'   => $request->nip,
-                'name'  => $request->name,
-                'email' => $request->email,
-                'role'  => $request->role,
+                'nip' => trim($validated['nip']),
+                'name' => $validated['name'],
+                'email' => strtolower($validated['email']),
+                'role' => $validated['role'],
             ];
 
-            // Jika user mengisi kolom password, maka perbarui password-nya
             if ($request->filled('password')) {
-                $updateData['password'] = Hash::make($request->password);
+                $updateData['password'] = Hash::make($validated['password']);
             }
 
             $user->update($updateData);
@@ -128,15 +149,11 @@ class UserController extends Controller
     /**
      * Menghapus data pengguna dari database.
      */
-    /**
-     * Menghapus data pengguna dari database.
-     */
     public function destroy($nip)
     {
         $user = User::where('nip', $nip)->firstOrFail();
 
-        // PERBAIKAN: Mencegah user menghapus akunnya sendiri dengan mencocokkan ID secara langsung
-        if (\Illuminate\Support\Facades\Auth::id() == $user->id) {
+        if (Auth::id() === $user->nip) {
             return redirect()->route('admin.user.index')->with('error', 'Anda tidak dapat menghapus akun yang sedang Anda gunakan.');
         }
 
